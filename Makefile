@@ -80,10 +80,10 @@ db-migrate:
 	@$(ACTIVATE) && alembic -c db/alembic.ini revision -m "$(msg)"
 
 db-upgrade:
-	@$(ACTIVATE) && alembic -c db/alembic.ini upgrade head
+	@PGHOST=$(PGDATA) PGPORT=5433 $(ACTIVATE) && alembic -c db/alembic.ini upgrade head
 
 db-downgrade:
-	@$(ACTIVATE) && alembic -c db/alembic.ini downgrade -1
+	@PGHOST=$(PGDATA) PGPORT=5433 $(ACTIVATE) && alembic -c db/alembic.ini downgrade -1
 
 db-shell:
 	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet

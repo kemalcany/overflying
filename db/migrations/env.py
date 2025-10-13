@@ -9,13 +9,17 @@ config = context.config
 # If using metadata for autogenerate in the future, set target_metadata here.
 target_metadata = None
 
-# Point Alembic to the versions directory explicitly
-context.configure(version_table_schema=None, version_locations=["db/migrations/versions"])  # versions path
+VERSIONS_DIR = "db/migrations/versions"
 
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        version_locations=[VERSIONS_DIR],
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -29,7 +33,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            version_locations=[VERSIONS_DIR],
+        )
 
         with context.begin_transaction():
             context.run_migrations()

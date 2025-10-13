@@ -39,7 +39,7 @@ logs:
 
 
 api:
-	@echo "TODO: start FastAPI dev server (uvicorn)"
+	@cd apps/api && python3 src/run.py
 
 worker:
 	@echo "TODO: start worker"

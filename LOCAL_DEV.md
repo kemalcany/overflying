@@ -12,7 +12,7 @@
 brew install postgresql@18
 brew services start postgresql@18
 createdb planet || true
-psql -d planet -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+psql -d planet -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"  # uses your macOS user auth (peer)
 ```
 
 ### NATS
@@ -33,11 +33,10 @@ make logs       # shows statuses
 ## Database migrations
 
 ```
-make db-upgrade                 # apply migrations
+make db-upgrade                 # apply migrations (uses local unix socket auth)
 make db-migrate msg="add table" # create new migration revision
 ```
 
 ## Next steps
 
 - Implement API/worker/web run targets in Makefile when services are added.
-

@@ -1,15 +1,15 @@
-.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell codegen lint fmt test ci
+.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell codegen lint fmt test ci postgres-start postgres-stop nats-start nats-stop
 
 PROJECT=planet
-COMPOSE=cd infra && docker compose
+NATS_PID=infra/nats.pid
 
 help:
 	@echo "$(PROJECT) - Available Commands"
 	@echo "===================================="
-	@echo "make dev           - Start core services (Postgres 18, NATS)"
-	@echo "make up            - Start all services (compose)"
-	@echo "make down          - Stop all services"
-	@echo "make logs          - Tail compose logs"
+	@echo "make dev           - Start core services (Postgres 18 via Homebrew, NATS)"
+	@echo "make up            - Alias to dev (no Docker)"
+	@echo "make down          - Stop NATS and Postgres services"
+	@echo "make logs          - Show NATS status and Postgres service info"
 	@echo "make api           - Run API service locally (dev)"
 	@echo "make worker        - Run worker service locally (dev)"
 	@echo "make web           - Run web app locally (dev)"
@@ -23,17 +23,30 @@ help:
 	@echo "make test          - Run tests (unit + e2e placeholders)"
 	@echo "make ci            - CI placeholder"
 
-dev:
-	$(COMPOSE) up -d postgres nats
+dev: up
 
-up:
-	$(COMPOSE) up -d
+up: postgres-start nats-start
 
-down:
-	$(COMPOSE) down
+down: nats-stop postgres-stop
 
 logs:
-	$(COMPOSE) logs -f --tail=200
+	@echo "Postgres service status:" && brew services list | grep postgresql@18 || true
+	@echo "NATS status (pid file):" && test -f $(NATS_PID) && (echo running with PID `cat $(NATS_PID)`) || echo not running
+
+postgres-start:
+	@brew list postgresql@18 >/dev/null 2>&1 || brew install postgresql@18
+	@brew services start postgresql@18
+	@createdb planet 2>/dev/null || true
+
+postgres-stop:
+	@brew services stop postgresql@18 || true
+
+nats-start:
+	@brew list nats-server >/dev/null 2>&1 || brew install nats-server
+	@test -f $(NATS_PID) && kill -0 `cat $(NATS_PID)` 2>/dev/null && echo "NATS already running (PID `cat $(NATS_PID)`)" || (nohup nats-server -p 4222 -m 8222 >/dev/null 2>&1 & echo $$! > $(NATS_PID) && echo "Started NATS (PID `cat $(NATS_PID)`)" )
+
+nats-stop:
+	@test -f $(NATS_PID) && (kill `cat $(NATS_PID)` 2>/dev/null || true; rm -f $(NATS_PID)) || true
 
 api:
 	@echo "TODO: start FastAPI dev server (uvicorn)"

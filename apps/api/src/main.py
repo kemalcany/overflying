@@ -1,30 +1,26 @@
 """
 Constellation API - FastAPI service for GPU job orchestration
 """
-from typing import List
+
 from uuid import UUID
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
 
 from database import get_db
+from fastapi import Depends, FastAPI, HTTPException
 from models import Job
 from schemas import JobCreate, JobResponse
+from sqlalchemy.orm import Session
 
 app = FastAPI(
     title="Constellation API",
     description="GPU task orchestrator with real-time insights",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 
 @app.get("/")
 async def root():
     """Root endpoint - API info"""
-    return {
-        "name": "Constellation API",
-        "version": "0.1.0",
-        "status": "running"
-    }
+    return {"name": "Constellation API", "version": "0.1.0", "status": "running"}
 
 
 @app.get("/health")
@@ -33,7 +29,7 @@ async def health():
     return {"status": "healthy"}
 
 
-@app.get("/jobs", response_model=List[JobResponse])
+@app.get("/jobs", response_model=list[JobResponse])
 async def list_jobs(db: Session = Depends(get_db)):
     """Get all jobs from the database"""
     jobs = db.query(Job).order_by(Job.created_at.desc()).all()
@@ -47,7 +43,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         name=job_data.name,
         params=job_data.params,
         priority=job_data.priority,
-        submitted_by=job_data.submitted_by
+        submitted_by=job_data.submitted_by,
     )
     db.add(job)
     db.commit()

@@ -86,10 +86,15 @@ codegen:
 	@echo "(placeholder)"
 
 lint:
-	@echo "Run linters (placeholder)"
+	@echo "Running Ruff linter..."
+	@ruff check apps/api/src apps/worker/src 2>/dev/null || true
+	@echo "Linting complete!"
 
 fmt:
-	@echo "Run formatters (placeholder)"
+	@echo "Running Ruff formatter..."
+	@ruff format apps/api/src apps/worker/src 2>/dev/null || true
+	@ruff check --fix apps/api/src apps/worker/src 2>/dev/null || true
+	@echo "Formatting complete!"
 
 test:
 	@echo "Run tests (placeholder)"

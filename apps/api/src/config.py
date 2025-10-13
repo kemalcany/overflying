@@ -2,6 +2,7 @@
 Configuration management using pydantic-settings
 Reads from .env file automatically
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,9 +17,7 @@ class Settings(BaseSettings):
     port: int = 8000
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )
 
 

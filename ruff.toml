@@ -1,0 +1,49 @@
+# Ruff configuration for Constellation project
+# https://docs.astral.sh/ruff/configuration/
+
+# Target Python 3.11+
+target-version = "py311"
+
+# Line length (default: 88, same as Black)
+line-length = 88
+
+[lint]
+# Enable these rule sets
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade (modernize Python code)
+    "B",   # flake8-bugbear (find likely bugs)
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+# Ignore these specific rules
+ignore = [
+    "E501",  # line too long (let formatter handle it)
+    "B008",  # do not perform function calls in argument defaults (FastAPI Depends is safe)
+]
+
+# Exclude these directories from linting
+exclude = [
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".git",
+    "*.pyc",
+    "build",
+    "dist",
+]
+
+[format]
+# Use double quotes for strings
+quote-style = "double"
+
+# Use spaces for indentation
+indent-style = "space"
+
+# Respect magic trailing commas
+skip-magic-trailing-comma = false

@@ -47,7 +47,7 @@ postgres-start:
 	  || ( $(PGBIN)/pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start || true )
 	@# Treat readiness as success even if pg_ctl reported already running
 	@$(PGBIN)/pg_isready -q -h $(PGDATA) -p 5433 || (echo "Postgres not ready; see $(PGDATA)/server.log" && exit 1)
-	@$(PGBIN)/createdb planet 2>/dev/null || true
+	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/createdb planet 2>/dev/null || true
 
 postgres-stop:
 	@$(PGBIN)/pg_ctl -D $(PGDATA) stop -m fast || true

@@ -4,6 +4,7 @@ PROJECT=planet
 NATS_PID=infra/nats.pid
 BREW_PREFIX:=$(shell brew --prefix)
 PGDATA=$(BREW_PREFIX)/var/postgresql@18
+PGBIN=$(BREW_PREFIX)/opt/postgresql@18/bin
 
 help:
 	@echo "$(PROJECT) - Available Commands"
@@ -37,11 +38,14 @@ logs:
 
 postgres-start:
 	@brew list postgresql@18 >/dev/null 2>&1 || brew install postgresql@18
-	@brew services start postgresql@18 || (echo "brew services failed, trying pg_ctl..." && test -d $(PGDATA) || initdb -D $(PGDATA) && pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start)
-	@createdb planet 2>/dev/null || true
+	@echo "Starting Postgres 18 with explicit binaries at $(PGBIN)"
+	@mkdir -p $(PGDATA)
+	@test -f $(PGDATA)/PG_VERSION || $(PGBIN)/initdb -D $(PGDATA) -E UTF-8 --locale=en_US.UTF-8
+	@$(PGBIN)/pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start
+	@$(PGBIN)/createdb planet 2>/dev/null || true
 
 postgres-stop:
-	@brew services stop postgresql@18 || (test -d $(PGDATA) && pg_ctl -D $(PGDATA) stop -m fast || true)
+	@$(PGBIN)/pg_ctl -D $(PGDATA) stop -m fast || true
 
 nats-start:
 	@brew list nats-server >/dev/null 2>&1 || brew install nats-server
@@ -71,7 +75,7 @@ db-downgrade:
 	@alembic -c db/alembic.ini downgrade -1
 
 db-shell:
-	@psql postgres://postgres:postgres@localhost:5432/planet
+	@$(PGBIN)/psql -d planet
 
 codegen:
 	@echo "Generating TS client from OpenAPI..."

@@ -42,7 +42,11 @@ postgres-start:
 	@echo "Starting Postgres 18 with explicit binaries at $(PGBIN)"
 	@mkdir -p $(PGDATA)
 	@test -f $(PGDATA)/PG_VERSION || $(PGBIN)/initdb -D $(PGDATA) -E UTF-8 --locale=en_US.UTF-8
-	@$(PGBIN)/pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start
+	@# If already running, succeed silently; else try to start
+	@($(PGBIN)/pg_ctl -D $(PGDATA) status >/dev/null 2>&1 && echo "Postgres already running") \
+	  || ( $(PGBIN)/pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start || true )
+	@# Treat readiness as success even if pg_ctl reported already running
+	@$(PGBIN)/pg_isready -q -h $(PGDATA) -p 5433 || (echo "Postgres not ready; see $(PGDATA)/server.log" && exit 1)
 	@$(PGBIN)/createdb planet 2>/dev/null || true
 
 postgres-stop:
@@ -82,7 +86,7 @@ db-downgrade:
 	@$(ACTIVATE) && alembic -c db/alembic.ini downgrade -1
 
 db-shell:
-	@$(PGBIN)/psql -d planet
+	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet
 
 codegen:
 	@echo "Generating TS client from OpenAPI..."

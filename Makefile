@@ -1,18 +1,15 @@
-.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query codegen lint fmt test ci postgres-start postgres-stop nats-start nats-stop venv
+.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query codegen lint fmt test ci venv
 
 PROJECT=planet
-NATS_PID=infra/nats.pid
-BREW_PREFIX:=$(shell brew --prefix)
-PGDATA=$(BREW_PREFIX)/var/postgresql@18
-PGBIN=$(BREW_PREFIX)/opt/postgresql@18/bin
+COMPOSE=cd infra && docker compose
 
 help:
 	@echo "$(PROJECT) - Available Commands"
 	@echo "===================================="
-	@echo "make dev           - Start core services (Postgres 18 via Homebrew, NATS)"
-	@echo "make up            - Alias to dev (no Docker)"
-	@echo "make down          - Stop NATS and Postgres services"
-	@echo "make logs          - Show NATS status and Postgres service info"
+	@echo "make dev           - Start core services (Docker Compose: Postgres 18, NATS)"
+	@echo "make up            - Start all services (compose)"
+	@echo "make down          - Stop all services"
+	@echo "make logs          - Tail compose logs"
 	@echo "make api           - Run API service locally (dev)"
 	@echo "make worker        - Run worker service locally (dev)"
 	@echo "make web           - Run web app locally (dev)"
@@ -30,35 +27,16 @@ help:
 
 dev: up
 
-up: postgres-start nats-start
+up:
+	$(COMPOSE) up -d
 
-down: nats-stop postgres-stop
+down:
+	$(COMPOSE) down
 
 logs:
-	@echo "Postgres service status:" && brew services list | grep postgresql@18 || true
-	@echo "NATS status (pid file):" && test -f $(NATS_PID) && (echo running with PID `cat $(NATS_PID)`) || echo not running
+	$(COMPOSE) logs -f --tail=200
 
-postgres-start:
-	@brew list postgresql@18 >/dev/null 2>&1 || brew install postgresql@18
-	@echo "Starting Postgres 18 with explicit binaries at $(PGBIN)"
-	@mkdir -p $(PGDATA)
-	@test -f $(PGDATA)/PG_VERSION || $(PGBIN)/initdb -D $(PGDATA) -E UTF-8 --locale=en_US.UTF-8
-	@# If already running, succeed silently; else try to start
-	@($(PGBIN)/pg_ctl -D $(PGDATA) status >/dev/null 2>&1 && echo "Postgres already running") \
-	  || ( $(PGBIN)/pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start || true )
-	@# Treat readiness as success even if pg_ctl reported already running
-	@$(PGBIN)/pg_isready -q -h $(PGDATA) -p 5433 || (echo "Postgres not ready; see $(PGDATA)/server.log" && exit 1)
-	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/createdb planet 2>/dev/null || true
 
-postgres-stop:
-	@$(PGBIN)/pg_ctl -D $(PGDATA) stop -m fast || true
-
-nats-start:
-	@brew list nats-server >/dev/null 2>&1 || brew install nats-server
-	@test -f $(NATS_PID) && kill -0 `cat $(NATS_PID)` 2>/dev/null && echo "NATS already running (PID `cat $(NATS_PID)`)" || (nohup nats-server -p 4222 -m 8222 >/dev/null 2>&1 & echo $$! > $(NATS_PID) && echo "Started NATS (PID `cat $(NATS_PID)`)" )
-
-nats-stop:
-	@test -f $(NATS_PID) && (kill `cat $(NATS_PID)` 2>/dev/null || true; rm -f $(NATS_PID)) || true
 
 api:
 	@echo "TODO: start FastAPI dev server (uvicorn)"
@@ -87,10 +65,10 @@ db-downgrade:
 	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
 
 db-shell:
-	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet
+	@$(COMPOSE) exec -T postgres psql -U postgres -d planet
 
 db-query:
-	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet -c "SELECT id, name, state, created_at FROM jobs ORDER BY created_at DESC LIMIT 10;"
+	@$(COMPOSE) exec -T postgres psql -U postgres -d planet -c "SELECT id, name, state, created_at FROM jobs ORDER BY created_at DESC LIMIT 10;"
 
 codegen:
 	@echo "Generating TS client from OpenAPI..."

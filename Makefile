@@ -78,13 +78,13 @@ venv:
 db-migrate:
 	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\"" && exit 1)
 	@echo "Generating Alembic revision: $(msg)"
-	@$(ACTIVATE) && alembic -c db/alembic.ini revision -m "$(msg)"
+	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini revision -m "$(msg)"'
 
 db-upgrade:
-	@PGHOST=$(PGDATA) PGPORT=5433 $(ACTIVATE) && alembic -c db/alembic.ini upgrade head
+	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini upgrade head'
 
 db-downgrade:
-	@PGHOST=$(PGDATA) PGPORT=5433 $(ACTIVATE) && alembic -c db/alembic.ini downgrade -1
+	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
 
 db-shell:
 	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet

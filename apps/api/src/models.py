@@ -2,9 +2,10 @@
 SQLAlchemy models for database tables
 """
 
-from database import Base
 from sqlalchemy import TIMESTAMP, Column, Integer, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+from .database import Base
 
 
 class Job(Base):

@@ -4,11 +4,12 @@ Constellation API - FastAPI service for GPU job orchestration
 
 from uuid import UUID
 
-from database import get_db
 from fastapi import Depends, FastAPI, HTTPException
-from models import Job
-from schemas import JobCreate, JobResponse
 from sqlalchemy.orm import Session
+
+from .database import get_db
+from .models import Job
+from .schemas import JobCreate, JobResponse
 
 app = FastAPI(
     title="Constellation API",

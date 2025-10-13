@@ -2,9 +2,10 @@
 Database connection and session management
 """
 
-from config import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .config import settings
 
 # Create database engine
 engine = create_engine(

@@ -46,7 +46,7 @@ clean:
 	@echo "All services stopped."
 
 api:
-	@cd apps/api && python3 src/run.py
+	@cd apps/api && python3 -m src.run
 
 worker:
 	@echo "TODO: start worker"

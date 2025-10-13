@@ -2,6 +2,8 @@
 
 PROJECT=planet
 NATS_PID=infra/nats.pid
+BREW_PREFIX:=$(shell brew --prefix)
+PGDATA=$(BREW_PREFIX)/var/postgresql@18
 
 help:
 	@echo "$(PROJECT) - Available Commands"
@@ -35,11 +37,11 @@ logs:
 
 postgres-start:
 	@brew list postgresql@18 >/dev/null 2>&1 || brew install postgresql@18
-	@brew services start postgresql@18
+	@brew services start postgresql@18 || (echo "brew services failed, trying pg_ctl..." && test -d $(PGDATA) || initdb -D $(PGDATA) && pg_ctl -D $(PGDATA) -l $(PGDATA)/server.log start)
 	@createdb planet 2>/dev/null || true
 
 postgres-stop:
-	@brew services stop postgresql@18 || true
+	@brew services stop postgresql@18 || (test -d $(PGDATA) && pg_ctl -D $(PGDATA) stop -m fast || true)
 
 nats-start:
 	@brew list nats-server >/dev/null 2>&1 || brew install nats-server

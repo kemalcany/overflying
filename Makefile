@@ -1,4 +1,4 @@
-.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell codegen lint fmt test ci postgres-start postgres-stop nats-start nats-stop venv
+.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query codegen lint fmt test ci postgres-start postgres-stop nats-start nats-stop venv
 
 PROJECT=planet
 NATS_PID=infra/nats.pid
@@ -20,6 +20,7 @@ help:
 	@echo "make db-upgrade    - Apply DB migrations"
 	@echo "make db-downgrade  - Revert last migration"
 	@echo "make db-shell      - PSQL shell into Postgres"
+	@echo "make db-query      - Run a simple SELECT on jobs"
 	@echo "make venv          - Create local Python venv with Alembic"
 	@echo "make codegen       - Generate clients from OpenAPI spec"
 	@echo "make lint          - Lint all packages/services"
@@ -87,6 +88,9 @@ db-downgrade:
 
 db-shell:
 	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet
+
+db-query:
+	@PGHOST=$(PGDATA) PGPORT=5433 $(PGBIN)/psql -d planet -c "SELECT id, name, state, created_at FROM jobs ORDER BY created_at DESC LIMIT 10;"
 
 codegen:
 	@echo "Generating TS client from OpenAPI..."

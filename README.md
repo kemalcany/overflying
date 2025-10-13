@@ -2,6 +2,13 @@
 
 A demo platform that schedules GPU jobs, streams live telemetry to a React (TanStack Query) dashboard, and exposes an OpenAPI-first API. Includes a small Go component for usage aggregation. This document tracks the living scope.
 
+## Documentation
+
+- **[Setup Guide](docs/SETUP.md)** - Fresh installation instructions for macOS (no Docker)
+- **[Local Development](docs/LOCAL_DEV.md)** - Running services locally
+- **[PostgreSQL Quick Reference](docs/PG.md)** - Common psql commands
+- **[Job Description](docs/JOB_DESCRIPTION.md)** - Planet Software Engineer role details
+
 ## Tech Stack
 
 - Frontend: React + TypeScript, Next.js, TanStack Query (data), Emotion CSS, WebSocket client. Optional: TanStack Router, TanStack Table.
@@ -118,6 +125,125 @@ Codegen:
 ## Decision Log
 
 - 2025‑10‑13: Adopt React + TanStack Query; Postgres 18 as primary DB; NATS for events; plan DuckDB analytics later.
+
+## Claude Suggestions
+
+### Implementation Strategy
+
+**Focus: Execute Milestone 1 Excellence Over Scope Creep**
+
+The architecture is solid and production-grade. Rather than spreading thin across all three milestones, prioritize delivering an impressive, complete Milestone 1 that demonstrates senior-level full-stack capabilities for the Planet application.
+
+### High-Impact Priorities (Week 1)
+
+1. **OpenAPI Spec First** (2-3 hours)
+   - Define 5-6 core endpoints to drive codegen:
+     - `POST /jobs` - Submit job with params
+     - `GET /jobs` - List jobs with filters (state, submitted_by)
+     - `GET /jobs/{id}` - Job detail with run history
+     - `GET /gpus` - GPU inventory with utilization
+     - `WS /stream` - WebSocket for real-time events
+   - Generate TS/Python clients immediately to verify workflow
+
+2. **FastAPI Backend** (Core Features)
+   - GPU discovery with `pynvml` (simulate if no GPU available)
+   - Job submission → Postgres persistence
+   - State machine: PENDING → RUNNING → COMPLETED/FAILED
+   - WebSocket endpoint multiplexing NATS streams
+
+3. **React Dashboard** (TanStack Query)
+   - Job submission form (name, params, priority)
+   - Job list with real-time status updates
+   - GPU status cards (utilization, memory, temp)
+   - Live logs via WebSocket connection
+   - Use Emotion CSS for theming
+
+4. **Worker Implementation**
+   - Job picker using `SELECT ... FOR UPDATE SKIP LOCKED` pattern
+   - Simple demo workload (doesn't require real GPU)
+   - Publish events to NATS for real-time UI updates
+   - Store metrics in `runs` table
+
+### Planet-Specific Enhancements
+
+**Satellite Imagery Simulation** (Bonus Points)
+- Frame jobs as "Process satellite tile at (lat, lon)"
+- Demo workload: image classification on sample tiles (use small dataset)
+- Store tile footprints in PostGIS as `GEOGRAPHY(POLYGON)`
+- Display processed coverage on deck.gl/MapLibre map
+- Add spatial query: "Find jobs within 100km of Berlin"
+
+This directly demonstrates understanding of Planet's satellite imaging domain and shows spatial data expertise.
+
+### Scope Adjustments
+
+**Defer to Post-Demo:**
+- Go usage service (nice-to-have, not critical for initial demo)
+- DuckDB analytics layer (already marked as "later")
+- Full observability stack (keep Prometheus + basic metrics; skip Tempo/Jaeger initially)
+- TanStackDB exploration (experimental, not production-ready yet)
+
+**Keep Simple:**
+- 1-2 demo workloads maximum
+- Focus on real-time updates (your differentiator)
+- Ensure `make demo` is impressive with seed data
+
+### Testing Strategy (Pragmatic)
+
+Don't over-test for a demo, but show best practices:
+- Unit tests for critical paths (job state transitions, queue logic)
+- One Playwright e2e: submit job → observe real-time completion
+- OpenAPI contract validation tests
+- k6 load test script (even if not run in demo)
+
+### Demo & Documentation
+
+**For Interview/Application:**
+- **Screencast** (2-3 min): Job submission → real-time updates → GPU metrics → map view
+- **Architecture diagram** (one page): Data flow from UI → API → Worker → NATS → WebSocket → UI
+- **README**: Clear `make demo` that seeds data and opens dashboard
+- Emphasize **OpenAPI-first** approach (Planet uses this extensively)
+
+### Job Alignment Strengths
+
+Your tech stack is nearly perfect for Planet's role:
+- ✅ React + Python + Go (exact match)
+- ✅ OpenAPI/REST codegen (job requirement)
+- ✅ Complex data visualization (TanStack Query, real-time dashboards)
+- ✅ Event-driven pipelines (NATS + WebSocket)
+- ✅ Spatial data (PostGIS + deck.gl - huge bonus for satellite company)
+- ✅ Customer telemetry focus (usage summaries, aggregation)
+
+### Quick Wins
+
+1. **Multi-tenant ready**: Jobs have `submitted_by` field (shows production thinking)
+2. **Usage telemetry page**: Aggregate stats by user (aligns with Planet's customer reporting focus)
+3. **Correlation IDs**: OpenTelemetry trace context through entire stack
+4. **Idempotent operations**: Job runs are idempotent with retry logic
+
+### Recommended Execution Order
+
+1. Fix configuration issues (✅ Done: Postgres port 5432)
+2. Design & implement OpenAPI spec
+3. Generate TS/Python clients and verify
+4. Build FastAPI with 3 core endpoints
+5. Create React dashboard (job list + submit)
+6. Implement worker with dummy workload
+7. Add WebSocket streaming for real-time
+8. Polish with demo data and `make demo`
+9. (Bonus) Add one spatial feature if time permits
+
+### Success Metrics
+
+A successful demo shows:
+- Submit job via UI → immediately see "PENDING" state
+- Worker picks up job → status updates to "RUNNING" in real-time
+- Logs stream to UI as job executes
+- Job completes → metrics visible, state updates to "COMPLETED"
+- GPU utilization visible throughout
+- (Bonus) Processed tiles appear on map
+
+This demonstrates: full-stack skills, real-time systems, async coordination, production patterns, and domain understanding.
 
 ## Repository layout
 

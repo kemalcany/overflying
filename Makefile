@@ -56,19 +56,19 @@ venv:
 db-migrate:
 	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\"" && exit 1)
 	@echo "Generating Alembic revision: $(msg)"
-	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini revision -m "$(msg)"'
+	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5432; source $(VENV)/bin/activate; alembic -c db/alembic.ini revision -m "$(msg)"'
 
 db-upgrade:
-	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini upgrade head'
+	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5432; source $(VENV)/bin/activate; alembic -c db/alembic.ini upgrade head'
 
 db-downgrade:
-	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5433; source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
+	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5432; source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
 
 db-shell:
-	@$(COMPOSE) exec -T postgres psql -U postgres -d planet
+	@psql -d planet
 
 db-query:
-	@$(COMPOSE) exec -T postgres psql -U postgres -d planet -c "SELECT id, name, state, created_at FROM jobs ORDER BY created_at DESC LIMIT 10;"
+	@psql -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"
 
 codegen:
 	@echo "Generating TS client from OpenAPI..."

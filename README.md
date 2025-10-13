@@ -6,6 +6,7 @@ A demo platform that schedules GPU jobs, streams live telemetry to a React (TanS
 
 - **[Setup Guide](docs/SETUP.md)** - Fresh installation instructions for macOS (no Docker)
 - **[Local Development](docs/LOCAL_DEV.md)** - Running services locally
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to Render, Railway, or Fly.io
 - **[PostgreSQL Quick Reference](docs/PG.md)** - Common psql commands
 - **[Job Description](docs/JOB_DESCRIPTION.md)** - Planet Software Engineer role details
 

@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     port: int = 8000
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",  # Ignore extra env vars (e.g., Render's vars)
     )
 
 

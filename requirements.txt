@@ -1,0 +1,18 @@
+# Constellation API - Production Dependencies
+# For deployment to Render, Railway, Fly.io, etc.
+
+# Web Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+alembic>=1.13.0
+
+# Validation & Settings
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Development Tools (optional in production)
+ruff>=0.6.0

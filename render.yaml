@@ -17,7 +17,7 @@ services:
           name: constellation-db
           property: connectionString
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.13.4"
       - key: HOST
         value: "0.0.0.0"
     healthCheckPath: /health

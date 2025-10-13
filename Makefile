@@ -1,4 +1,4 @@
-.PHONY: help dev up down logs api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query codegen lint fmt test ci venv
+.PHONY: help dev up down logs clean api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query codegen lint fmt test ci venv
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -10,6 +10,7 @@ help:
 	@echo "make up            - Start all services (compose)"
 	@echo "make down          - Stop all services"
 	@echo "make logs          - Tail compose logs"
+	@echo "make clean         - Kill all running service processes (API, worker, web)"
 	@echo "make api           - Run API service locally (dev)"
 	@echo "make worker        - Run worker service locally (dev)"
 	@echo "make web           - Run web app locally (dev)"
@@ -36,7 +37,13 @@ down:
 logs:
 	$(COMPOSE) logs -f --tail=200
 
-
+clean:
+	@echo "Killing all service processes..."
+	@-pkill -9 -f "uvicorn" 2>/dev/null || true
+	@-pkill -9 -f "python3 src/run.py" 2>/dev/null || true
+	@-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+	@-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@echo "All services stopped."
 
 api:
 	@cd apps/api && python3 src/run.py

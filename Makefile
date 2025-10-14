@@ -59,6 +59,7 @@ ACTIVATE=. $(VENV)/bin/activate
 
 venv:
 	@test -d $(VENV) || (python3 -m venv $(VENV) && $(ACTIVATE) && pip install --upgrade pip && pip install alembic SQLAlchemy psycopg2-binary)
+	@echo "Dont forget to manually activate the venv with: source $(VENV)/bin/activate"
 
 db-migrate:
 	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\"" && exit 1)

@@ -1,12 +1,12 @@
 """Worker main loop"""
 
 import time
-from sqlalchemy import text
 
 from config import settings
-from database import Job, SessionLocal
+from database import SessionLocal
 from executor import JobExecutor
 from gpu_manager import GPUManager
+from sqlalchemy import text
 
 
 class Worker:

@@ -1,7 +1,6 @@
 """GPU detection and monitoring (simulation mode for M3 Macs)"""
 
 import random
-import time
 from dataclasses import dataclass
 
 

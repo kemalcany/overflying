@@ -1,10 +1,9 @@
 """Database connection for worker"""
 
-from sqlalchemy import Column, Integer, Text, TIMESTAMP, create_engine, text
+from config import settings
+from sqlalchemy import TIMESTAMP, Column, Integer, Text, create_engine
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base, sessionmaker
-
-from config import settings
 
 engine = create_engine(settings.database_url, echo=False)
 SessionLocal = sessionmaker(bind=engine)

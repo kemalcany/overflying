@@ -1,7 +1,7 @@
 """Job executor - runs jobs on GPUs"""
 
-import time
 import random
+import time
 from uuid import UUID
 
 

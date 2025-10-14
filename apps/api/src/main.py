@@ -5,6 +5,7 @@ Constellation API - FastAPI service for GPU job orchestration
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .database import get_db
@@ -15,6 +16,16 @@ app = FastAPI(
     title="Constellation API",
     description="GPU task orchestrator with real-time insights",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000"
+    ],  # Or ["*"] to allow all origins (not recommended for production)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

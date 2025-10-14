@@ -10,7 +10,7 @@ from .config import settings
 # Create database engine
 engine = create_engine(
     settings.database_url,
-    echo=True,  # Log SQL queries (helpful for development)
+    echo=False,  # Log SQL queries (helpful for development)
     future=True,
 )
 

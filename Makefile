@@ -49,7 +49,7 @@ api:
 	@cd apps/api && python3 -m src.run
 
 worker:
-	@echo "TODO: start worker"
+	@cd apps/worker && python3 src/main.py
 
 web:
 	@echo "TODO: start Next.js dev server"

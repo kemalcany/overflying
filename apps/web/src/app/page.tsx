@@ -1,6 +1,6 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { api } from '@/app/api'
 import styled from '@emotion/styled'
 
 const Container = styled.div`max-width: 1200px; margin: 0 auto; padding: 2rem;`

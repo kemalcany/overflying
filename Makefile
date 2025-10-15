@@ -1,4 +1,4 @@
-.PHONY: help dev up down logs clean api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query codegen lint fmt test ci venv
+.PHONY: help dev up down logs clean api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query openapi-sync openapi-validate codegen lint fmt test ci venv
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -20,7 +20,9 @@ help:
 	@echo "make db-shell      - PSQL shell into Postgres"
 	@echo "make db-query      - Run a simple SELECT on jobs"
 	@echo "make venv          - Create local Python venv with Alembic"
-	@echo "make codegen       - Generate clients from OpenAPI spec"
+	@echo "make openapi-sync      - Download OpenAPI spec from running API to openapi/spec-generated.json"
+	@echo "make openapi-validate  - Validate openapi/spec.yaml using Redocly CLI"
+	@echo "make codegen           - Generate TS types from OpenAPI spec"
 	@echo "make lint          - Lint all packages/services"
 	@echo "make fmt           - Format all packages/services"
 	@echo "make test          - Run tests (unit + e2e placeholders)"
@@ -41,6 +43,11 @@ clean:
 	@echo "Killing all service processes..."
 	@-pkill -9 -f "uvicorn" 2>/dev/null || true
 	@-pkill -9 -f "python3 src/run.py" 2>/dev/null || true
+	@-pkill -9 -f "python3 src/main.py" 2>/dev/null || true
+	@-pkill -9 -f "apps/worker" 2>/dev/null || true
+	@-pkill -9 -f "apps/api" 2>/dev/null || true
+	@-pkill -9 -f "bun.*next" 2>/dev/null || true
+	@-pkill -9 -f "node.*next" 2>/dev/null || true
 	@-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 	@echo "All services stopped."
@@ -52,7 +59,7 @@ worker:
 	@cd apps/worker && python3 src/main.py
 
 web:
-	@echo "TODO: start Next.js dev server"
+	@cd apps/web && bun run dev
 
 VENV=.venv
 ACTIVATE=. $(VENV)/bin/activate
@@ -78,13 +85,19 @@ db-shell:
 db-query:
 	@psql -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"
 
+openapi-sync:
+	@echo "Syncing OpenAPI spec from FastAPI..."
+	@curl -s http://localhost:8000/openapi.json | python3 -m json.tool > openapi/spec-generated.json
+	@echo "Spec saved to openapi/spec-generated.json"
+
+openapi-validate:
+	@echo "Validating OpenAPI spec..."
+	@npx -y @redocly/cli lint openapi/spec.yaml
+
 codegen:
-	@echo "Generating TS client from OpenAPI..."
+	@echo "Generating TS types from OpenAPI..."
 	@npx -y openapi-typescript openapi/spec.yaml -o packages/shared-types/ts/index.ts
-	@echo "Generating Go client from OpenAPI..."
-	@echo "(placeholder)"
-	@echo "Generating Python client from OpenAPI..."
-	@echo "(placeholder)"
+	@echo "✓ TS types generated"
 
 lint:
 	@echo "Running Ruff linter..."

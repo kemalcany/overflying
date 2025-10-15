@@ -1,0 +1,289 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Constellation API",
+        "description": "GPU task orchestrator with real-time insights",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "summary": "Root",
+                "description": "Root endpoint - API info",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "Health",
+                "description": "Health check endpoint",
+                "operationId": "health_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs": {
+            "get": {
+                "summary": "List Jobs",
+                "description": "Get all jobs from the database",
+                "operationId": "list_jobs_jobs_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/JobResponse"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Jobs Jobs Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Job",
+                "description": "Create a new job",
+                "operationId": "create_job_jobs_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/JobCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{job_id}": {
+            "get": {
+                "summary": "Get Job",
+                "description": "Get a single job by ID",
+                "operationId": "get_job_jobs__job_id__get",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Job Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "JobCreate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Job name"
+                    },
+                    "params": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Params",
+                        "description": "Job parameters as JSON"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "title": "Priority",
+                        "description": "Job priority (higher = more important)",
+                        "default": 0
+                    },
+                    "submitted_by": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Submitted By",
+                        "description": "Who submitted the job"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "JobCreate",
+                "description": "Schema for creating a new job"
+            },
+            "JobResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "params": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Params"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "title": "Priority"
+                    },
+                    "state": {
+                        "type": "string",
+                        "title": "State"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "submitted_by": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Submitted By"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "params",
+                    "priority",
+                    "state",
+                    "created_at",
+                    "submitted_by"
+                ],
+                "title": "JobResponse",
+                "description": "Schema for job response"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

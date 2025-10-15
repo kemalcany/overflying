@@ -1,6 +1,142 @@
+
 openapi: 3.1.0
 info:
   title: Constellation API
+  description: GPU task orchestrator with real-time insights
   version: 0.1.0
-paths: {}
-components: {}
+  contact:
+    name: Kemal
+    url: https://github.com/kemalcany/planet-cursor
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+security: []
+
+servers:
+  # - url: http://localhost:8000
+  #  description: Local development
+  - url: https://constellation-api.onrender.com
+    description: Production
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+        '400':
+          description: Bad request
+
+  /jobs:
+    get:
+      summary: List all jobs
+      operationId: listJobs
+      tags: [Jobs]
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+        '400':
+          description: Bad request
+    post:
+      summary: Create new job
+      operationId: createJob
+      tags: [Jobs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+      responses:
+        '201':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          description: Bad request
+
+  /jobs/{jobId}:
+    get:
+      summary: Get job by ID
+      operationId: getJob
+      tags: [Jobs]
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          description: Job not found
+        '400':
+          description: Bad request
+
+components:
+  schemas:
+    Job:
+      type: object
+      required: [id, name, state, priority, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+        priority:
+          type: integer
+          default: 0
+        state:
+          type: string
+          enum: [queued, running, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        submitted_by:
+          type: [string, "null"]
+
+    JobCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        params:
+          type: object
+          additionalProperties: true
+          default: {}
+        priority:
+          type: integer
+          default: 0
+        submitted_by:
+          type: [string, "null"]

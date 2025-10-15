@@ -1,4 +1,4 @@
-.PHONY: help dev up down logs clean api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query openapi-sync openapi-validate codegen lint fmt test ci venv
+.PHONY: help dev up down logs clean api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query openapi-sync openapi-validate openapi-diff codegen lint fmt test ci venv
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -20,9 +20,10 @@ help:
 	@echo "make db-shell      - PSQL shell into Postgres"
 	@echo "make db-query      - Run a simple SELECT on jobs"
 	@echo "make venv          - Create local Python venv with Alembic"
-	@echo "make openapi-sync      - Download OpenAPI spec from running API to openapi/spec-generated.json"
-	@echo "make openapi-validate  - Validate openapi/spec.yaml using Redocly CLI"
-	@echo "make codegen           - Generate TS types from OpenAPI spec"
+	@echo "make openapi-sync      - Sync spec from running API"
+	@echo "make openapi-validate  - Validate spec.yaml"
+	@echo "make openapi-diff      - Check if spec matches running API"
+	@echo "make codegen           - Generate TS types from spec"
 	@echo "make lint          - Lint all packages/services"
 	@echo "make fmt           - Format all packages/services"
 	@echo "make test          - Run tests (unit + e2e placeholders)"
@@ -93,6 +94,12 @@ openapi-sync:
 openapi-validate:
 	@echo "Validating OpenAPI spec..."
 	@npx -y @redocly/cli lint openapi/spec.yaml
+
+openapi-diff:
+	@echo "Checking if manual spec matches API..."
+	@curl -s http://localhost:8000/openapi.json > /tmp/openapi-live.json
+	@python3 openapi/openapi-diff.py
+	@rm -f /tmp/openapi-live.json
 
 codegen:
 	@echo "Generating TS types from OpenAPI..."

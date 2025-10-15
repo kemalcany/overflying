@@ -1,63 +1,52 @@
-
 openapi: 3.1.0
 info:
   title: Constellation API
   description: GPU task orchestrator with real-time insights
   version: 0.1.0
-  contact:
-    name: Kemal
-    url: https://github.com/kemalcany/planet-cursor
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-
-security: []
-
-servers:
-  # - url: http://localhost:8000
-  #  description: Local development
-  - url: https://constellation-api.onrender.com
-    description: Production
 
 paths:
-  /health:
+  /:
     get:
-      summary: Health check
-      operationId: healthCheck
+      summary: Root
+      description: Root endpoint - API info
+      operationId: root__get
       responses:
         '200':
-          description: Service is healthy
+          description: Successful Response
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: healthy
-        '400':
-          description: Bad request
+              schema: {}
+
+  /health:
+    get:
+      summary: Health
+      description: Health check endpoint
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
 
   /jobs:
     get:
-      summary: List all jobs
-      operationId: listJobs
-      tags: [Jobs]
+      summary: List Jobs
+      description: Get all jobs from the database
+      operationId: list_jobs_jobs_get
       responses:
         '200':
-          description: List of jobs
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Job'
-        '400':
-          description: Bad request
+                  $ref: '#/components/schemas/JobResponse'
     post:
-      summary: Create new job
-      operationId: createJob
-      tags: [Jobs]
+      summary: Create Job
+      description: Create a new job
+      operationId: create_job_jobs_post
       requestBody:
         required: true
         content:
@@ -66,21 +55,25 @@ paths:
               $ref: '#/components/schemas/JobCreate'
       responses:
         '201':
-          description: Job created
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Job'
-        '400':
-          description: Bad request
+                $ref: '#/components/schemas/JobResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 
-  /jobs/{jobId}:
+  /jobs/{job_id}:
     get:
-      summary: Get job by ID
-      operationId: getJob
-      tags: [Jobs]
+      summary: Get Job
+      description: Get a single job by ID
+      operationId: get_job_jobs__job_id__get
       parameters:
-        - name: jobId
+        - name: job_id
           in: path
           required: true
           schema:
@@ -88,21 +81,46 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Job details
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Job'
-        '404':
-          description: Job not found
-        '400':
-          description: Bad request
+                $ref: '#/components/schemas/JobResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 
 components:
   schemas:
-    Job:
+    JobCreate:
       type: object
-      required: [id, name, state, priority, created_at]
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Job name
+        params:
+          type: object
+          additionalProperties: true
+          description: Job parameters as JSON
+          default: {}
+        priority:
+          type: integer
+          description: Job priority (higher = more important)
+          default: 0
+        submitted_by:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Who submitted the job
+
+    JobResponse:
+      type: object
+      required: [id, name, params, priority, state, created_at, submitted_by]
       properties:
         id:
           type: string
@@ -114,29 +132,35 @@ components:
           additionalProperties: true
         priority:
           type: integer
-          default: 0
         state:
           type: string
-          enum: [queued, running, completed, failed]
         created_at:
           type: string
           format: date-time
         submitted_by:
-          type: [string, "null"]
+          anyOf:
+            - type: string
+            - type: 'null'
 
-    JobCreate:
+    HTTPValidationError:
       type: object
-      required: [name]
       properties:
-        name:
+        detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      type: object
+      required: [loc, msg, type]
+      properties:
+        loc:
+          type: array
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+        msg:
           type: string
-          minLength: 1
-        params:
-          type: object
-          additionalProperties: true
-          default: {}
-        priority:
-          type: integer
-          default: 0
-        submitted_by:
-          type: [string, "null"]
+        type:
+          type: string

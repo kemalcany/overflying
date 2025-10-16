@@ -1,7 +1,8 @@
 'use client'
 import * as Dialog from '@radix-ui/react-dialog'
 import styled from '@emotion/styled'
-import { JobForm, JobFormData } from './JobForm'
+import { JobForm } from './JobForm'
+import type { JobFormData } from './JobForm'
 
 interface JobDialogProps {
   open: boolean
@@ -83,15 +84,11 @@ const CloseButton = styled(Dialog.Close)`
     background: #f5f5f5;
   }
 `
+const Description = styled(Dialog.Description)`
+  display: none;
+`
 
-export const JobDialog = ({
-  open,
-  onOpenChange,
-  onSubmit,
-  defaultValues,
-  title = 'Create Job',
-  isSubmitting,
-}: JobDialogProps) => {
+export const JobDialog = ({ open, onOpenChange, onSubmit, defaultValues, title = 'Create Job', isSubmitting }: JobDialogProps) => {
   const handleSubmit = (data: JobFormData) => {
     onSubmit(data)
   }
@@ -102,6 +99,7 @@ export const JobDialog = ({
         <Overlay />
         <Content>
           <Title>{title}</Title>
+          <Description>Job form dialog</Description>
           <CloseButton>
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
               <path
@@ -112,12 +110,7 @@ export const JobDialog = ({
               />
             </svg>
           </CloseButton>
-          <JobForm
-            defaultValues={defaultValues}
-            onSubmit={handleSubmit}
-            onCancel={() => onOpenChange(false)}
-            isSubmitting={isSubmitting}
-          />
+          <JobForm defaultValues={defaultValues} onSubmit={handleSubmit} onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
         </Content>
       </Dialog.Portal>
     </Dialog.Root>

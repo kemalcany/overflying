@@ -126,6 +126,8 @@ This is the step-by-step sequence followed to implement the full CRUD functional
 - Test validation scenarios
 - Test error handling
 
+**Backend Cost: Items 6-7 completed for $3.19 with Claude Code (and Sonnet questions vie CoPilot)**
+
 **Total Time: ~4 hours | Backend Cost: $1.20**
 
 ---

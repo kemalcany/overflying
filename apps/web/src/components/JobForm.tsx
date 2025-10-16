@@ -5,8 +5,8 @@ import { z } from 'zod'
 import styled from '@emotion/styled'
 
 const jobFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  priority: z.number().min(0).max(100).default(0),
+  name: z.string().trim().min(1, 'Name is required'),
+  priority: z.number().min(0).max(100),
 })
 
 export type JobFormData = z.infer<typeof jobFormSchema>
@@ -99,13 +99,13 @@ export const JobForm = ({ defaultValues, onSubmit, onCancel, isSubmitting }: Job
   } = useForm<JobFormData>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
-      name: defaultValues?.name || '',
-      priority: defaultValues?.priority || 0,
+      name: defaultValues?.name ?? '',
+      priority: defaultValues?.priority ?? 0,
     },
   })
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)}>
+    <Form onSubmit={handleSubmit((data) => onSubmit(data))}>
       <FormGroup>
         <Label htmlFor="name">Job Name *</Label>
         <Input id="name" {...register('name')} placeholder="Enter job name" />
@@ -114,14 +114,7 @@ export const JobForm = ({ defaultValues, onSubmit, onCancel, isSubmitting }: Job
 
       <FormGroup>
         <Label htmlFor="priority">Priority</Label>
-        <Input
-          id="priority"
-          type="number"
-          {...register('priority', { valueAsNumber: true })}
-          min={0}
-          max={100}
-          placeholder="0"
-        />
+        <Input id="priority" type="number" {...register('priority', { valueAsNumber: true })} min={0} max={100} placeholder="0" />
         {errors.priority && <ErrorMessage>{errors.priority.message}</ErrorMessage>}
       </FormGroup>
 

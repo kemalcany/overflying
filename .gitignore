@@ -68,3 +68,6 @@ logs/
 # ========
 .DS_Store
 Thumbs.db
+
+# Cesium files (globe)
+/apps/globe/public/cesium

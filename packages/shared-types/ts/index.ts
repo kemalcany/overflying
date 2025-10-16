@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Root
+         * @description Root endpoint - API info
+         */
+        get: operations["root__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -11,8 +31,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health check */
-        get: operations["healthCheck"];
+        /**
+         * Health
+         * @description Health check endpoint
+         */
+        get: operations["health_health_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -28,29 +51,46 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List all jobs */
-        get: operations["listJobs"];
+        /**
+         * List Jobs
+         * @description Get all jobs from the database
+         */
+        get: operations["list_jobs_jobs_get"];
         put?: never;
-        /** Create new job */
-        post: operations["createJob"];
+        /**
+         * Create Job
+         * @description Create a new job
+         */
+        post: operations["create_job_jobs_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/jobs/{jobId}": {
+    "/jobs/{job_id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get job by ID */
-        get: operations["getJob"];
-        put?: never;
+        /**
+         * Get Job
+         * @description Get a single job by ID
+         */
+        get: operations["get_job_jobs__job_id__get"];
+        /**
+         * Update Job
+         * @description Update an existing job
+         */
+        put: operations["update_job_jobs__job_id__put"];
         post?: never;
-        delete?: never;
+        /**
+         * Delete Job
+         * @description Delete a job
+         */
+        delete: operations["delete_job_jobs__job_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -60,30 +100,104 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Job: {
-            /** Format: uuid */
-            id: string;
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * JobCreate
+         * @description Schema for creating a new job
+         */
+        JobCreate: {
+            /**
+             * Name
+             * @description Job name
+             */
             name: string;
+            /**
+             * Params
+             * @description Job parameters as JSON
+             */
             params?: {
                 [key: string]: unknown;
             };
-            /** @default 0 */
+            /**
+             * Priority
+             * @description Job priority (higher = more important)
+             * @default 0
+             */
             priority: number;
-            /** @enum {string} */
-            state: "queued" | "running" | "completed" | "failed";
-            /** Format: date-time */
-            created_at: string;
+            /**
+             * Submitted By
+             * @description Who submitted the job
+             */
             submitted_by?: string | null;
         };
-        JobCreate: {
+        /**
+         * JobResponse
+         * @description Schema for job response
+         */
+        JobResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
             name: string;
-            /** @default {} */
+            /** Params */
             params: {
                 [key: string]: unknown;
             };
-            /** @default 0 */
+            /** Priority */
             priority: number;
+            /** State */
+            state: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Submitted By */
+            submitted_by: string | null;
+        };
+        /**
+         * JobUpdate
+         * @description Schema for updating an existing job - all fields optional
+         */
+        JobUpdate: {
+            /**
+             * Name
+             * @description Job name
+             */
+            name?: string | null;
+            /**
+             * Params
+             * @description Job parameters as JSON
+             */
+            params?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Priority
+             * @description Job priority (higher = more important)
+             */
+            priority?: number | null;
+            /**
+             * Submitted By
+             * @description Who submitted the job
+             */
             submitted_by?: string | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
         };
     };
     responses: never;
@@ -94,7 +208,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    healthCheck: {
+    root__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -103,28 +217,18 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Service is healthy */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @example healthy */
-                        status?: string;
-                    };
+                    "application/json": unknown;
                 };
-            };
-            /** @description Bad request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
-    listJobs: {
+    health_health_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -133,25 +237,38 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of jobs */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"][];
+                    "application/json": unknown;
                 };
-            };
-            /** @description Bad request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
-    createJob: {
+    list_jobs_jobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponse"][];
+                };
+            };
+        };
+    };
+    create_job_jobs_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -164,57 +281,118 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Job created */
+            /** @description Successful Response */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponse"];
                 };
             };
-            /** @description Bad request */
-            400: {
+            /** @description Validation Error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
-    getJob: {
+    get_job_jobs__job_id__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                jobId: string;
+                job_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Job details */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponse"];
                 };
             };
-            /** @description Bad request */
-            400: {
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_job_jobs__job_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_job_jobs__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Job not found */
-            404: {
+            /** @description Validation Error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

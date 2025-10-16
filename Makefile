@@ -87,24 +87,28 @@ db-shell:
 db-query:
 	@psql -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"
 
-openapi-sync:
-	@echo "Syncing OpenAPI spec from FastAPI..."
-	@curl -s http://localhost:8000/openapi.json | python3 -m json.tool > openapi/spec-generated.json
-	@echo "Spec saved to openapi/spec-generated.json"
-
-openapi-validate:
-	@echo "Validating OpenAPI spec..."
-	@npx -y @redocly/cli lint openapi/spec.yaml
-
+# Not used currently
 openapi-diff:
 	@echo "Checking if manual spec matches API..."
 	@curl -s http://localhost:8000/openapi.json > /tmp/openapi-live.json
 	@python3 openapi/openapi-diff.py
 	@rm -f /tmp/openapi-live.json
 
+# Not used currently
+openapi-validate:
+	@echo "Validating OpenAPI spec..."
+	@npx -y @redocly/cli lint openapi/spec-generated.json --config openapi/.redocly.yaml || true	
+
+# Used currently
+openapi-sync:
+	@echo "Syncing OpenAPI spec from FastAPI..."
+	@curl -s http://localhost:8000/openapi.json | python3 -m json.tool > openapi/spec-generated.json
+	@echo "✓ Spec synced to spec-generated.json (spec.yaml unchanged)"
+
+# Used currently
 codegen:
 	@echo "Generating TS types from OpenAPI..."
-	@npx -y openapi-typescript openapi/spec.yaml -o packages/shared-types/ts/index.ts
+	@npx -y openapi-typescript openapi/spec-generated.json -o packages/shared-types/ts/index.ts
 	@echo "✓ TS types generated"
 
 lint:

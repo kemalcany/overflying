@@ -15,6 +15,22 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then((r) => r.json() as Promise<Job>),
+  updateJob: async (id: string, data: Partial<JobCreate>): Promise<Job> =>
+    fetch(`${API_URL}/jobs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then((r) => {
+      if (!r.ok) throw new Error(`Failed to update job: ${r.statusText}`)
+      return r.json() as Promise<Job>
+    }),
+  deleteJob: async (id: string): Promise<void> =>
+    fetch(`${API_URL}/jobs/${id}`, {
+      method: 'DELETE',
+    }).then((r) => {
+      if (!r.ok) throw new Error(`Failed to delete job: ${r.statusText}`)
+      return undefined
+    }),
 }
 
 export const connectWebSocket = (onMessage: (job: Job) => void) => {

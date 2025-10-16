@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class JobCreate(BaseModel):
@@ -22,6 +22,17 @@ class JobCreate(BaseModel):
     submitted_by: str | None = Field(None, description="Who submitted the job")
 
 
+class JobUpdate(BaseModel):
+    """Schema for updating an existing job - all fields optional"""
+
+    name: str | None = Field(None, description="Job name", min_length=1)
+    params: dict[str, Any] | None = Field(None, description="Job parameters as JSON")
+    priority: int | None = Field(
+        None, description="Job priority (higher = more important)"
+    )
+    submitted_by: str | None = Field(None, description="Who submitted the job")
+
+
 class JobResponse(BaseModel):
     """Schema for job response"""
 
@@ -33,5 +44,4 @@ class JobResponse(BaseModel):
     created_at: datetime
     submitted_by: str | None
 
-    class Config:
-        from_attributes = True  # Allows creating from SQLAlchemy models
+    model_config = ConfigDict(from_attributes=True)

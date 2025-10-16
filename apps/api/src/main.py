@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from .database import get_db
 from .models import Job
-from .schemas import JobCreate, JobResponse
+from .schemas import JobCreate, JobResponse, JobUpdate
 
 app = FastAPI(
     title="Constellation API",
@@ -70,3 +70,32 @@ async def get_job(job_id: UUID, db: Session = Depends(get_db)):
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
     return job
+
+
+@app.put("/jobs/{job_id}", response_model=JobResponse)
+async def update_job(job_id: UUID, job_data: JobUpdate, db: Session = Depends(get_db)):
+    """Update an existing job"""
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    # Update only provided fields
+    update_data = job_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(job, field, value)
+
+    db.commit()
+    db.refresh(job)
+    return job
+
+
+@app.delete("/jobs/{job_id}", status_code=204)
+async def delete_job(job_id: UUID, db: Session = Depends(get_db)):
+    """Delete a job"""
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+    db.delete(job)
+    db.commit()
+    return None

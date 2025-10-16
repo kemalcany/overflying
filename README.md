@@ -9,6 +9,7 @@ A demo platform that schedules GPU jobs, streams live telemetry to a React (TanS
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to Render, Railway, or Fly.io
 - **[PostgreSQL Quick Reference](docs/PG.md)** - Common psql commands
 - **[Job Description](docs/JOB_DESCRIPTION.md)** - Planet Software Engineer role details
+- **[CRUD Implementation](docs/CRUD.md)** - Complete job CRUD operations with testing strategy
 
 ## Tech Stack
 

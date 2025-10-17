@@ -34,3 +34,6 @@ next-env.d.ts
 
 # Cesium
 /public/cesium/
+
+# Unused
+_unused

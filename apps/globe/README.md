@@ -21,6 +21,7 @@ A minimal React application demonstrating a 3D interactive CesiumJS globe with d
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    cd apps/globe
    npm install
@@ -29,6 +30,7 @@ A minimal React application demonstrating a 3D interactive CesiumJS globe with d
    ```
 
 2. Run the development server:
+
    ```bash
    npm run dev
    # or

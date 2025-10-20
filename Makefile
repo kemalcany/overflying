@@ -24,6 +24,7 @@ help:
 	@echo "  make web           - Run web app locally (dev)"
 	@echo ""
 	@echo "Database (Docker - Recommended):"
+	@echo "  make db-init       - Initialize database (create alembic_version table)"
 	@echo "  make db-migrate    - Generate Alembic revision (requires msg=\"...\")"
 	@echo "  make db-upgrade    - Apply DB migrations"
 	@echo "  make db-downgrade  - Revert last migration"
@@ -73,9 +74,12 @@ clean:
 	@-pkill -9 -f "apps/api" 2>/dev/null || true
 	@-pkill -9 -f "bun.*next" 2>/dev/null || true
 	@-pkill -9 -f "node.*next" 2>/dev/null || true
+	@-pkill -9 -f "nats-server" 2>/dev/null || true
 	@-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 	@-lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+	@-lsof -ti:4222 | xargs kill -9 2>/dev/null || true
+	@-lsof -ti:8222 | xargs kill -9 2>/dev/null || true	
 	@echo "All services stopped."
 
 api:
@@ -99,6 +103,12 @@ venv:
 # ============================================================================
 # Uses containerized Postgres on localhost:5432
 # Accessible across all repos (api, worker, etc)
+
+db-init:
+	@echo "Initializing database..."
+	@PGPASSWORD=postgres psql -h localhost -U postgres -d planet -c \
+			"CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(64) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));"
+	@echo "✓ Database initialized"
 
 db-migrate:
 	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\"" && exit 1)

@@ -2,6 +2,7 @@
 .PHONY: db-migrate db-upgrade db-downgrade db-shell db-query
 .PHONY: db-local-migrate db-local-upgrade db-local-downgrade db-local-shell db-local-query
 .PHONY: openapi-sync openapi-validate openapi-diff codegen lint fmt test ci
+.PHONY: test-db-up test-db-down test-api test-worker
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -44,8 +45,13 @@ help:
 	@echo "  make codegen           - Generate TS types from spec"
 	@echo "  make lint          - Lint all packages/services"
 	@echo "  make fmt           - Format all packages/services"
-	@echo "  make test          - Run tests (unit + e2e placeholders)"
 	@echo "  make ci            - CI placeholder"
+	@echo "Testing:"
+	@echo "  make test-db-up    - Start test database (Docker)"
+	@echo "  make test-db-down  - Stop test database"
+	@echo "  make test-api      - Run API tests (starts test DB if needed)"
+	@echo "  make test-worker   - Run worker tests (placeholder)"
+	@echo "  make test          - Run all tests"	
 
 dev: up
 
@@ -176,8 +182,31 @@ fmt:
 	@ruff check --fix apps/api/src apps/worker/src 2>/dev/null || true
 	@echo "Formatting complete!"
 
-test:
-	@echo "Run tests (placeholder)"
+test-db-up:
+	@echo "Starting test database..."
+	@cd apps/api && docker compose -f docker-compose.test.yml up -d
+	@echo "Waiting for test DB to be ready..."
+	@sleep 3
+	@docker exec constellation-test-db pg_isready -U test || (echo "Test DB not ready" && exit 1)
+	@echo "✓ Test database ready"
+
+test-db-down:
+	@echo "Stopping test database..."
+	@cd apps/api && docker compose -f docker-compose.test.yml down
+	@echo "✓ Test database stopped"
+
+test-api: test-db-up
+	@echo "Running API tests..."
+	@cd apps/api && python3 -m pip install -q -e ".[dev]" && \
+			TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" pytest
+	@echo "✓ API tests complete"
+
+test-worker:
+	@echo "Running worker tests (placeholder)..."
+	@cd apps/worker && echo "No tests yet"
+
+test: test-api test-worker
+	@echo "✓ All tests complete"
 
 ci:
 	@echo "CI local placeholder"

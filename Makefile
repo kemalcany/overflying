@@ -1,15 +1,43 @@
 .PHONY: help dev up down logs clean api worker web venv
-.PHONY: db-migrate db-upgrade db-downgrade db-shell db-query
-.PHONY: db-local-migrate db-local-upgrade db-local-downgrade db-local-shell db-local-query
+.PHONY: db-migrate db-upgrade db-downgrade db-shell db-query db-init
+.PHONY: db-local-shell db-local-query
+.PHONY: db-staging-init db-staging-migrate db-staging-upgrade db-staging-proxy
+.PHONY: db-prod-init db-prod-migrate db-prod-upgrade db-prod-proxy
 .PHONY: openapi-sync openapi-validate openapi-diff codegen lint fmt test ci
 .PHONY: test-db-up test-db-down test-api test-worker
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
 
+# Environment management (default: development)
+ENV ?= development
+ALEMBIC_CONFIG = db/alembic.ini
+
+# Root environment files (shared across all apps)
+ifeq ($(ENV),local)
+	ROOT_ENV = .env.local
+else ifeq ($(ENV),staging)
+	ROOT_ENV = .env.staging
+else ifeq ($(ENV),production)
+	ROOT_ENV = .env.production
+else
+	ROOT_ENV = .env.development
+endif
+
+# Helper function to load env files (root + optional override)
+# Usage: $(call load_env,app_name)
+define load_env
+	@set -a; \
+	[ -f $(ROOT_ENV) ] && . $(ROOT_ENV); \
+	[ -f apps/$(1)/.env.$(ENV).override ] && . apps/$(1)/.env.$(ENV).override; \
+	set +a
+endef
+
 help:
 	@echo "$(PROJECT) - Available Commands"
 	@echo "===================================="
+	@echo ""
+	@echo "Environment: $(ENV) (override with ENV=local|staging|production)"
 	@echo ""
 	@echo "Infrastructure (Docker):"
 	@echo "  make dev           - Start core services (Docker Compose: Postgres 18, NATS)"
@@ -19,24 +47,19 @@ help:
 	@echo ""
 	@echo "Services (Local Development):"
 	@echo "  make clean         - Kill all running service processes (API, worker, web)"
-	@echo "  make api           - Run API service locally (dev)"
-	@echo "  make worker        - Run worker service locally (dev)"
+	@echo "  make api [ENV=...]         - Run API service (default: development)"
+	@echo "  make worker [ENV=...]      - Run worker service (default: development)"
 	@echo "  make web           - Run web app locally (dev)"
 	@echo ""
-	@echo "Database (Docker - Recommended):"
-	@echo "  make db-init       - Initialize database (create alembic_version table)"
-	@echo "  make db-migrate    - Generate Alembic revision (requires msg=\"...\")"
-	@echo "  make db-upgrade    - Apply DB migrations"
-	@echo "  make db-downgrade  - Revert last migration"
-	@echo "  make db-shell      - PSQL shell into Docker Postgres"
-	@echo "  make db-query      - Run a simple SELECT on jobs"
+	@echo "Database Commands (Environment-aware):"
+	@echo "  make db-init [ENV=...]       - Initialize database (development/staging/production)"
+	@echo "  make db-migrate msg=\"...\" [ENV=...]  - Generate migration"
+	@echo "  make db-upgrade [ENV=...]    - Apply migrations"
+	@echo "  make db-downgrade [ENV=...]  - Revert migration"
 	@echo ""
-	@echo "Database (Local Postgres):"
-	@echo "  make db-local-migrate    - Generate Alembic revision (requires msg=\"...\")"
-	@echo "  make db-local-upgrade    - Apply DB migrations"
-	@echo "  make db-local-downgrade  - Revert last migration"
-	@echo "  make db-local-shell      - PSQL shell into local Postgres"
-	@echo "  make db-local-query      - Run a simple SELECT on jobs"
+	@echo "Cloud SQL Proxy (Staging/Production):"
+	@echo "  make db-staging-proxy   - Start Cloud SQL proxy for staging (port 5433)"
+	@echo "  make db-prod-proxy      - Start Cloud SQL proxy for production (port 5434)"
 	@echo ""
 	@echo "Development Tools:"
 	@echo "  make venv          - Create local Python venv with Alembic"
@@ -47,6 +70,7 @@ help:
 	@echo "  make lint          - Lint all packages/services"
 	@echo "  make fmt           - Format all packages/services"
 	@echo "  make ci            - CI placeholder"
+	@echo ""
 	@echo "Testing:"
 	@echo "  make test-db-up    - Start test database (Docker)"
 	@echo "  make test-db-down  - Stop test database"
@@ -83,10 +107,19 @@ clean:
 	@echo "All services stopped."
 
 api:
-	@cd apps/api && python3 -m src.run
+	@echo "Starting API with environment: $(ENV)"
+	$(call load_env,api); \
+	cd apps/api && python3 -m src.run
 
 worker:
-	@cd apps/worker && python3 src/main.py
+	@echo "Starting Worker with environment: $(ENV)"
+	$(call load_env,worker); \
+	cd apps/worker && python3 src/main.py
+
+globe:
+	@echo "Starting Globe with environment: $(ENV)"
+	$(call load_env,globe); \
+	cd apps/globe && npm run dev
 
 web:
 	@cd apps/web && bun run dev
@@ -104,55 +137,46 @@ venv:
 # Uses containerized Postgres on localhost:5432
 # Accessible across all repos (api, worker, etc)
 
+# Use once
+
 db-init:
-	@echo "Initializing database..."
-	@PGPASSWORD=postgres psql -h localhost -U postgres -d planet -c \
-			"CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(64) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));"
-	@echo "✓ Database initialized"
+	@echo "Initializing database for environment: $(ENV)..."
+	@set -a; . $(ROOT_ENV); set +a; \
+	psql $$(echo $$DATABASE_URL | sed 's/postgresql+psycopg2/postgresql/') -c \
+	"CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(64) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));"
+	@echo "✓ Database initialized for $(ENV)"
 
 db-migrate:
-	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\"" && exit 1)
-	@echo "Generating Alembic revision (Docker): $(msg)"
-	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.ini revision -m "$(msg)"'
+	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\" [ENV=...]" && exit 1)
+	@echo "Generating Alembic revision for $(ENV): $(msg)"
+	@set -a; . $(ROOT_ENV); set +a; \
+	bash -lc 'source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) revision -m "$(msg)"'
 
 db-upgrade:
-	@echo "Applying DB migrations (Docker)..."
-	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.ini upgrade head'
+	@echo "Applying DB migrations for $(ENV)..."
+	@set -a; . $(ROOT_ENV); set +a; \
+	bash -lc 'source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) upgrade head'
+	@echo "✓ Migrations applied for $(ENV)"
 
 db-downgrade:
-	@echo "Reverting last migration (Docker)..."
-	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
+	@echo "Reverting last migration for $(ENV)..."
+	@set -a; . $(ROOT_ENV); set +a; \
+	bash -lc 'source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) downgrade -1'
 
-db-shell:
-	@echo "Connecting to Docker Postgres..."
-	@PGPASSWORD=postgres psql -h localhost -U postgres -d planet
+db-staging-proxy:
+	@echo "Starting Cloud SQL Proxy for staging..."
+	@cloud-sql-proxy overfly-db:us-central1:planet-staging --port 5433
 
-db-query:
-	@echo "Querying jobs from Docker Postgres..."
-	@PGPASSWORD=postgres psql -h localhost -U postgres -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"
+db-prod-proxy:
+	@echo "Starting Cloud SQL Proxy for production..."
+	@cloud-sql-proxy overfly-db:us-central1:planet-production --port 5434
 
-# ============================================================================
-# Database Commands (Local Postgres)
-# ============================================================================
-# Uses local Postgres installation via Unix socket
-
-db-local-migrate:
-	@test -n "$(msg)" || (echo "Usage: make db-local-migrate msg=\"your message\"" && exit 1)
-	@echo "Generating Alembic revision (Local): $(msg)"
-	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.local.ini revision -m "$(msg)"'
-
-db-local-upgrade:
-	@echo "Applying DB migrations (Local)..."
-	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.local.ini upgrade head'
-
-db-local-downgrade:
-	@echo "Reverting last migration (Local)..."
-	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.local.ini downgrade -1'
-
+# Not used currently
 db-local-shell:
 	@echo "Connecting to local Postgres..."
 	@psql -d planet
 
+# Not used currently
 db-local-query:
 	@echo "Querying jobs from local Postgres..."
 	@psql -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"

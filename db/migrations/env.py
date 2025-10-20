@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import os
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 # This config object provides access to the values within the .ini file in use.
 config = context.config
+
+# Override sqlalchemy.url with DATABASE_URL from environment if present
+if os.getenv("DATABASE_URL"):
+    config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
 
 # If using metadata for autogenerate in the future, set target_metadata here.
 target_metadata = None
@@ -47,5 +52,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
-

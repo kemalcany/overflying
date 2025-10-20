@@ -1,4 +1,7 @@
-.PHONY: help dev up down logs clean api worker web db-migrate db-revise db-upgrade db-downgrade db-shell db-query openapi-sync openapi-validate openapi-diff codegen lint fmt test ci venv
+.PHONY: help dev up down logs clean api worker web venv
+.PHONY: db-migrate db-upgrade db-downgrade db-shell db-query
+.PHONY: db-local-migrate db-local-upgrade db-local-downgrade db-local-shell db-local-query
+.PHONY: openapi-sync openapi-validate openapi-diff codegen lint fmt test ci
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -6,28 +9,43 @@ COMPOSE=cd infra && docker compose
 help:
 	@echo "$(PROJECT) - Available Commands"
 	@echo "===================================="
-	@echo "make dev           - Start core services (Docker Compose: Postgres 18, NATS)"
-	@echo "make up            - Start all services (compose)"
-	@echo "make down          - Stop all services"
-	@echo "make logs          - Tail compose logs"
-	@echo "make clean         - Kill all running service processes (API, worker, web)"
-	@echo "make api           - Run API service locally (dev)"
-	@echo "make worker        - Run worker service locally (dev)"
-	@echo "make web           - Run web app locally (dev)"
-	@echo "make db-migrate    - Generate Alembic revision (requires msg=\"...\")"
-	@echo "make db-upgrade    - Apply DB migrations"
-	@echo "make db-downgrade  - Revert last migration"
-	@echo "make db-shell      - PSQL shell into Postgres"
-	@echo "make db-query      - Run a simple SELECT on jobs"
-	@echo "make venv          - Create local Python venv with Alembic"
-	@echo "make openapi-sync      - Sync spec from running API"
-	@echo "make openapi-validate  - Validate spec.yaml"
-	@echo "make openapi-diff      - Check if spec matches running API"
-	@echo "make codegen           - Generate TS types from spec"
-	@echo "make lint          - Lint all packages/services"
-	@echo "make fmt           - Format all packages/services"
-	@echo "make test          - Run tests (unit + e2e placeholders)"
-	@echo "make ci            - CI placeholder"
+	@echo ""
+	@echo "Infrastructure (Docker):"
+	@echo "  make dev           - Start core services (Docker Compose: Postgres 18, NATS)"
+	@echo "  make up            - Start all services (compose)"
+	@echo "  make down          - Stop all services"
+	@echo "  make logs          - Tail compose logs"
+	@echo ""
+	@echo "Services (Local Development):"
+	@echo "  make clean         - Kill all running service processes (API, worker, web)"
+	@echo "  make api           - Run API service locally (dev)"
+	@echo "  make worker        - Run worker service locally (dev)"
+	@echo "  make web           - Run web app locally (dev)"
+	@echo ""
+	@echo "Database (Docker - Recommended):"
+	@echo "  make db-migrate    - Generate Alembic revision (requires msg=\"...\")"
+	@echo "  make db-upgrade    - Apply DB migrations"
+	@echo "  make db-downgrade  - Revert last migration"
+	@echo "  make db-shell      - PSQL shell into Docker Postgres"
+	@echo "  make db-query      - Run a simple SELECT on jobs"
+	@echo ""
+	@echo "Database (Local Postgres):"
+	@echo "  make db-local-migrate    - Generate Alembic revision (requires msg=\"...\")"
+	@echo "  make db-local-upgrade    - Apply DB migrations"
+	@echo "  make db-local-downgrade  - Revert last migration"
+	@echo "  make db-local-shell      - PSQL shell into local Postgres"
+	@echo "  make db-local-query      - Run a simple SELECT on jobs"
+	@echo ""
+	@echo "Development Tools:"
+	@echo "  make venv          - Create local Python venv with Alembic"
+	@echo "  make openapi-sync      - Sync spec from running API"
+	@echo "  make openapi-validate  - Validate spec.yaml"
+	@echo "  make openapi-diff      - Check if spec matches running API"
+	@echo "  make codegen           - Generate TS types from spec"
+	@echo "  make lint          - Lint all packages/services"
+	@echo "  make fmt           - Format all packages/services"
+	@echo "  make test          - Run tests (unit + e2e placeholders)"
+	@echo "  make ci            - CI placeholder"
 
 dev: up
 
@@ -70,21 +88,57 @@ venv:
 	@test -d $(VENV) || (python3 -m venv $(VENV) && $(ACTIVATE) && pip install --upgrade pip && pip install alembic SQLAlchemy psycopg2-binary)
 	@echo "Dont forget to manually activate the venv with: source $(VENV)/bin/activate"
 
+# ============================================================================
+# Database Commands (Docker - Recommended)
+# ============================================================================
+# Uses containerized Postgres on localhost:5432
+# Accessible across all repos (api, worker, etc)
+
 db-migrate:
 	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\"" && exit 1)
-	@echo "Generating Alembic revision: $(msg)"
-	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5432; source $(VENV)/bin/activate; alembic -c db/alembic.ini revision -m "$(msg)"'
+	@echo "Generating Alembic revision (Docker): $(msg)"
+	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.ini revision -m "$(msg)"'
 
 db-upgrade:
-	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5432; source $(VENV)/bin/activate; alembic -c db/alembic.ini upgrade head'
+	@echo "Applying DB migrations (Docker)..."
+	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.ini upgrade head'
 
 db-downgrade:
-	@bash -lc 'export PGHOST=$(PGDATA) PGPORT=5432; source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
+	@echo "Reverting last migration (Docker)..."
+	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.ini downgrade -1'
 
 db-shell:
-	@psql -d planet
+	@echo "Connecting to Docker Postgres..."
+	@PGPASSWORD=postgres psql -h localhost -U postgres -d planet
 
 db-query:
+	@echo "Querying jobs from Docker Postgres..."
+	@PGPASSWORD=postgres psql -h localhost -U postgres -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"
+
+# ============================================================================
+# Database Commands (Local Postgres)
+# ============================================================================
+# Uses local Postgres installation via Unix socket
+
+db-local-migrate:
+	@test -n "$(msg)" || (echo "Usage: make db-local-migrate msg=\"your message\"" && exit 1)
+	@echo "Generating Alembic revision (Local): $(msg)"
+	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.local.ini revision -m "$(msg)"'
+
+db-local-upgrade:
+	@echo "Applying DB migrations (Local)..."
+	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.local.ini upgrade head'
+
+db-local-downgrade:
+	@echo "Reverting last migration (Local)..."
+	@bash -lc 'source $(VENV)/bin/activate; alembic -c db/alembic.local.ini downgrade -1'
+
+db-local-shell:
+	@echo "Connecting to local Postgres..."
+	@psql -d planet
+
+db-local-query:
+	@echo "Querying jobs from local Postgres..."
 	@psql -d planet -c "SELECT * FROM jobs ORDER BY created_at DESC;"
 
 # Not used currently

@@ -1,7 +1,10 @@
 version: "3.9"
+
 services:
+  # Development Postgres - shared across all repos (api, worker, etc)
   postgres:
     image: postgres:18
+    container_name: planet-dev-postgres
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -14,11 +17,24 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - planet_pgdata:/var/lib/postgresql/data
+    networks:
+      - planet-dev
+
+  # NATS message broker
   nats:
     image: nats:2
+    container_name: planet-dev-nats
     ports:
       - "4222:4222"
       - "8222:8222"
+    networks:
+      - planet-dev
+
 volumes:
-  pgdata:
+  planet_pgdata:
+
+networks:
+  planet-dev:
+    name: planet-dev
+    driver: bridge

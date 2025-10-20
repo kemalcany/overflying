@@ -1,5 +1,5 @@
 [project]
-name = "constellation-api"
+name = "overflying-api"
 version = "0.1.0"
 description = "FastAPI service for Constellation GPU orchestrator"
 requires-python = ">=3.11"
@@ -23,12 +23,18 @@ dev = [
     "faker>=33.0.0",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
-
+# Change from hatchling to poetry-core
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# Add Poetry-specific package configuration
+[tool.poetry]
+name = "overflying-api"
+version = "0.1.0"
+description = "FastAPI service for Constellation GPU orchestrator"
+authors = ["Your Name <your.email@example.com>"]
+packages = [{include = "src"}]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -321,4 +321,7 @@ class TestRootAndHealth:
         response = client.get("/health")
 
         assert response.status_code == 200
-        assert response.json() == {"status": "healthy"}
+        assert response.json() == {
+            "status": "healthy",
+            "environment": "testing-approval-workflow",
+        }

@@ -24,7 +24,6 @@ jobs:
   test-web:
     name: Test Web
     runs-on: ubuntu-latest
-    # Only run if API deployment succeeded or this is a manual trigger
     if: |
       github.event_name != 'workflow_run' || 
       github.event.workflow_run.conclusion == 'success'
@@ -56,10 +55,6 @@ jobs:
         working-directory: apps/web
         run: bun install --frozen-lockfile
 
-      - name: Install coverage dependency
-        working-directory: apps/web
-        run: bun add -d @vitest/coverage-v8        
-
       - name: Run unit tests
         working-directory: apps/web
         env:
@@ -83,111 +78,18 @@ jobs:
           echo "   WEB TESTS PASSED SUCCESSFULLY!"
           echo "========================================="
 
-  build-staging:
-    name: Build for Staging
-    runs-on: ubuntu-latest
-    needs: test-web
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Get staging API URL from Secret Manager
-        id: staging-secrets
-        run: |
-          API_URL=$(gcloud secrets versions access latest --secret="api-url-staging" --project=${{ env.PROJECT_ID }})
-          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        working-directory: apps/web
-        run: bun install --frozen-lockfile
-
-      - name: Build static export for staging
-        working-directory: apps/web
-        env:
-          NEXT_PUBLIC_API_URL: ${{ steps.staging-secrets.outputs.api_url }}
-        run: bun run build
-
-      - name: Upload staging build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: staging-build
-          path: apps/web/out
-          retention-days: 1
-
-  build-production:
-    name: Build for Production
-    runs-on: ubuntu-latest
-    needs: test-web
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Get production API URL from Secret Manager
-        id: production-secrets
-        run: |
-          API_URL=$(gcloud secrets versions access latest --secret="api-url-production" --project=${{ env.PROJECT_ID }})
-          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        working-directory: apps/web
-        run: bun install --frozen-lockfile
-
-      - name: Build static export for production
-        working-directory: apps/web
-        env:
-          NEXT_PUBLIC_API_URL: ${{ steps.production-secrets.outputs.api_url }}
-        run: bun run build
-
-      - name: Upload production build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-build
-          path: apps/web/out
-          retention-days: 1
-
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: build-staging
+    needs: test-web
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: web-staging
+      url: https://staging.overfly.ing
 
     steps:
-      - name: Download staging build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: staging-build
-          path: out
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -197,43 +99,59 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get staging bucket from Secret Manager
-        id: staging-secrets
+      - name: Get staging secrets from Secret Manager
+        id: secrets
         run: |
+          API_URL=$(gcloud secrets versions access latest --secret="api-url-staging" --project=${{ env.PROJECT_ID }})
           BUCKET=$(gcloud secrets versions access latest --secret="bucket-web-staging" --project=${{ env.PROJECT_ID }})
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
           echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: bun install --frozen-lockfile
+
+      - name: Build static export
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_API_URL: ${{ steps.secrets.outputs.api_url }}
+        run: bun run build
+
       - name: Upload to staging bucket
+        working-directory: apps/web
         run: |
-          gsutil -m rsync -r -d out gs://${{ steps.staging-secrets.outputs.bucket }}
+          gsutil -m rsync -r -d out gs://${{ steps.secrets.outputs.bucket }}
 
       - name: Set cache control headers
         run: |
           gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
-            "gs://${{ steps.staging-secrets.outputs.bucket }}/_next/static/**" || true
+            "gs://${{ steps.secrets.outputs.bucket }}/_next/static/**" || true
           gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
-            "gs://${{ steps.staging-secrets.outputs.bucket }}/**/*.html" || true
+            "gs://${{ steps.secrets.outputs.bucket }}/**/*.html" || true
 
       - name: Staging Deployment Success
         run: |
           echo "========================================="
           echo "   STAGING DEPLOYED!"
           echo "========================================="
-          echo "Bucket: gs://${{ steps.staging-secrets.outputs.bucket }}"
+          echo "URL: https://staging.overfly.ing"
 
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build-production, deploy-staging]
+    needs: deploy-staging
     environment:
       name: web-production
+      url: https://overfly.ing
 
     steps:
-      - name: Download production build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: out
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -243,26 +161,44 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get production bucket from Secret Manager
-        id: production-secrets
+      - name: Get production secrets from Secret Manager
+        id: secrets
         run: |
+          API_URL=$(gcloud secrets versions access latest --secret="api-url-production" --project=${{ env.PROJECT_ID }})
           BUCKET=$(gcloud secrets versions access latest --secret="bucket-web-production" --project=${{ env.PROJECT_ID }})
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
           echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: bun install --frozen-lockfile
+
+      - name: Build static export
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_API_URL: ${{ steps.secrets.outputs.api_url }}
+        run: bun run build
+
       - name: Upload to production bucket
+        working-directory: apps/web
         run: |
-          gsutil -m rsync -r -d out gs://${{ steps.production-secrets.outputs.bucket }}
+          gsutil -m rsync -r -d out gs://${{ steps.secrets.outputs.bucket }}
 
       - name: Set cache control headers
         run: |
           gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
-            "gs://${{ steps.production-secrets.outputs.bucket }}/_next/static/**" || true
+            "gs://${{ steps.secrets.outputs.bucket }}/_next/static/**" || true
           gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
-            "gs://${{ steps.production-secrets.outputs.bucket }}/**/*.html" || true
+            "gs://${{ steps.secrets.outputs.bucket }}/**/*.html" || true
 
       - name: Production Deployment Success
         run: |
           echo "========================================="
           echo "   PRODUCTION DEPLOYED!"
           echo "========================================="
-          echo "Bucket: gs://${{ steps.production-secrets.outputs.bucket }}"
+          echo "URL: https://overfly.ing"

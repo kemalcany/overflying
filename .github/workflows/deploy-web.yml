@@ -56,6 +56,10 @@ jobs:
         working-directory: apps/web
         run: bun install --frozen-lockfile
 
+      - name: Install coverage dependency
+        working-directory: apps/web
+        run: bun add -d @vitest/coverage-v8        
+
       - name: Run unit tests
         working-directory: apps/web
         env:

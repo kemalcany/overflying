@@ -11,6 +11,10 @@ on:
     paths:
       - 'apps/web/**'
       - '.github/workflows/deploy-web.yml'
+  workflow_run:
+    workflows: ["Deploy API"]
+    types:
+      - completed
 
 env:
   PROJECT_ID: overflying-web
@@ -20,10 +24,28 @@ jobs:
   test-web:
     name: Test Web
     runs-on: ubuntu-latest
+    # Only run if API deployment succeeded or this is a manual trigger
+    if: |
+      github.event_name != 'workflow_run' || 
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get staging API URL from Secret Manager
+        id: api-url
+        run: |
+          API_URL=$(gcloud secrets versions access latest --secret="api-url-staging" --project=${{ env.PROJECT_ID }})
+          echo "url=$API_URL" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -37,7 +59,7 @@ jobs:
       - name: Run unit tests
         working-directory: apps/web
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_API_URL: ${{ steps.api-url.outputs.url }}
         run: bun run test:coverage
 
       - name: Upload coverage reports
@@ -194,7 +216,6 @@ jobs:
           echo "   STAGING DEPLOYED!"
           echo "========================================="
           echo "Bucket: gs://${{ steps.staging-secrets.outputs.bucket }}"
-          echo "Temp URL: https://storage.googleapis.com/${{ steps.staging-secrets.outputs.bucket }}/index.html"
 
   deploy-production:
     name: Deploy to Production
@@ -241,4 +262,3 @@ jobs:
           echo "   PRODUCTION DEPLOYED!"
           echo "========================================="
           echo "Bucket: gs://${{ steps.production-secrets.outputs.bucket }}"
-          echo "Temp URL: https://storage.googleapis.com/${{ steps.production-secrets.outputs.bucket }}/index.html"

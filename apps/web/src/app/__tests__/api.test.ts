@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest'
 import { api } from '../api'
 
 // Mock fetch globally
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
+
+// Use the environment variable that's set in vitest.setup.ts
+const TEST_API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 describe('API Client', () => {
   beforeEach(() => {
@@ -28,7 +31,7 @@ describe('API Client', () => {
 
       const result = await api.getJobs()
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/jobs')
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs`)
       expect(result).toEqual(mockJobs)
     })
   })
@@ -44,7 +47,7 @@ describe('API Client', () => {
 
       const result = await api.getJob('123')
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/jobs/123')
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs/123`)
       expect(result).toEqual(mockJob)
     })
   })
@@ -61,7 +64,7 @@ describe('API Client', () => {
 
       const result = await api.createJob(jobData)
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/jobs', {
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jobData),
@@ -83,7 +86,7 @@ describe('API Client', () => {
 
       const result = await api.updateJob(jobId, updateData)
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/jobs/789', {
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs/789`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
@@ -109,7 +112,7 @@ describe('API Client', () => {
 
       const result = await api.deleteJob('123')
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/jobs/123', {
+      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs/123`, {
         method: 'DELETE',
       })
       expect(result).toBeUndefined()

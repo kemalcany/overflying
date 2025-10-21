@@ -4,9 +4,9 @@ A production-grade platform that schedules GPU jobs, streams live telemetry to a
 
 [![codecov](https://codecov.io/gh/kemalcany/overflying/graph/badge.svg?token=0GWQP8PF79)](https://codecov.io/gh/kemalcany/overflying)
 
-## What is Constellation?
+## What is Overfly?
 
-Constellation demonstrates full-stack development capabilities with a focus on:
+Overfly demonstrates full-stack development capabilities with a focus on:
 
 - Real-time data streaming and event-driven architecture
 - OpenAPI-first API design with type generation

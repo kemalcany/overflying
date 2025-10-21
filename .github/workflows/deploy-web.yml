@@ -17,7 +17,7 @@ on:
       - completed
 
 env:
-  PROJECT_ID: overflying-web
+  PROJECT_ID: overflying-cluster
   REGION: europe-west1
 
 jobs:

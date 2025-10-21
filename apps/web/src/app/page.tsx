@@ -50,23 +50,8 @@ const JobGrid = styled.div`
 const JobCard = styled.div<{ state: string }>`
   padding: 1.5rem;
   border-radius: 8px;
-  border: 2px solid
-    ${(p) =>
-      p.state === 'completed'
-        ? '#4caf50'
-        : p.state === 'running'
-          ? '#ff9800'
-          : p.state === 'failed'
-            ? '#f44336'
-            : '#2196f3'};
-  background: ${(p) =>
-    p.state === 'completed'
-      ? '#e8f5e9'
-      : p.state === 'running'
-        ? '#fff3e0'
-        : p.state === 'failed'
-          ? '#ffebee'
-          : '#e3f2fd'};
+  border: 2px solid ${(p) => (p.state === 'completed' ? '#4caf50' : p.state === 'running' ? '#ff9800' : p.state === 'failed' ? '#f44336' : '#2196f3')};
+  background: ${(p) => (p.state === 'completed' ? '#e8f5e9' : p.state === 'running' ? '#fff3e0' : p.state === 'failed' ? '#ffebee' : '#e3f2fd')};
   position: relative;
 `
 
@@ -118,14 +103,7 @@ const Badge = styled.span<{ state: string }>`
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  background: ${(p) =>
-    p.state === 'completed'
-      ? '#4caf50'
-      : p.state === 'running'
-        ? '#ff9800'
-        : p.state === 'failed'
-          ? '#f44336'
-          : '#2196f3'};
+  background: ${(p) => (p.state === 'completed' ? '#4caf50' : p.state === 'running' ? '#ff9800' : p.state === 'failed' ? '#f44336' : '#2196f3')};
   color: white;
 `
 
@@ -221,7 +199,7 @@ const HomePage = () => {
   return (
     <Container>
       <Header>
-        <Title>Constellation Dashboard</Title>
+        <Title>Dashboard</Title>
         <CreateButton onClick={() => setIsCreateDialogOpen(true)}>Create Job</CreateButton>
       </Header>
 
@@ -254,13 +232,7 @@ const HomePage = () => {
         </EmptyState>
       )}
 
-      <JobDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleCreate}
-        title="Create Job"
-        isSubmitting={createMutation.isPending}
-      />
+      <JobDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onSubmit={handleCreate} title="Create Job" isSubmitting={createMutation.isPending} />
 
       <JobDialog
         open={!!editingJob}

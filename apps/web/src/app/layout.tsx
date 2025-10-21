@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { QueryProvider } from '@/providers/query'
 import { Toaster } from 'sonner'
 
-export const metadata = { title: 'Constellation', description: 'GPU Task Orchestrator' }
+export const metadata = { title: 'Overfly', description: 'GPU Task Orchestrator' }
 
 const RootLayout = ({ children }: { children: ReactNode }) => (
   <html lang="en">

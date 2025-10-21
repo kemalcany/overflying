@@ -100,13 +100,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get staging secrets from Secret Manager
+      - name: Get staging API URL from Secret Manager
         id: secrets
         run: |
           API_URL=$(gcloud secrets versions access latest --secret="api-url-staging" --project=${{ env.PROJECT_ID }})
-          BUCKET=$(gcloud secrets versions access latest --secret="bucket-web-staging" --project=${{ env.PROJECT_ID }})
           echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-          echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -123,17 +121,15 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ steps.secrets.outputs.api_url }}
         run: bun run build
 
-      - name: Upload to staging bucket
-        working-directory: apps/web
-        run: |
-          gsutil -m rsync -r -d out gs://${{ steps.secrets.outputs.bucket }}
-
-      - name: Set cache control headers
-        run: |
-          gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
-            "gs://${{ steps.secrets.outputs.bucket }}/_next/static/**" || true
-          gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
-            "gs://${{ steps.secrets.outputs.bucket }}/**/*.html" || true
+      - name: Deploy to Firebase Hosting (Staging)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.GCP_SA_KEY }}'
+          channelId: live
+          projectId: overflying-web
+          target: overflying-staging
+          entryPoint: apps/web
 
       - name: Staging Deployment Success
         run: |
@@ -162,13 +158,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get production secrets from Secret Manager
+      - name: Get production API URL from Secret Manager
         id: secrets
         run: |
           API_URL=$(gcloud secrets versions access latest --secret="api-url-production" --project=${{ env.PROJECT_ID }})
-          BUCKET=$(gcloud secrets versions access latest --secret="bucket-web-production" --project=${{ env.PROJECT_ID }})
           echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-          echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -185,17 +179,15 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ steps.secrets.outputs.api_url }}
         run: bun run build
 
-      - name: Upload to production bucket
-        working-directory: apps/web
-        run: |
-          gsutil -m rsync -r -d out gs://${{ steps.secrets.outputs.bucket }}
-
-      - name: Set cache control headers
-        run: |
-          gsutil -m setmeta -h "Cache-Control:public, max-age=31536000, immutable" \
-            "gs://${{ steps.secrets.outputs.bucket }}/_next/static/**" || true
-          gsutil -m setmeta -h "Cache-Control:public, max-age=0, must-revalidate" \
-            "gs://${{ steps.secrets.outputs.bucket }}/**/*.html" || true
+      - name: Deploy to Firebase Hosting (Production)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.GCP_SA_KEY }}'
+          channelId: live
+          projectId: overflying-web
+          target: overflying-production
+          entryPoint: apps/web
 
       - name: Production Deployment Success
         run: |

@@ -154,10 +154,9 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: staging
-      url: http://staging-api.overflying.dev
+      url: https://staging.api.overfly.ing
 
     steps:
       - name: Checkout code
@@ -215,10 +214,9 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: deploy-staging
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: http://api.overflying.dev
+      url: https://api.overfly.ing
 
     steps:
       - name: Checkout code

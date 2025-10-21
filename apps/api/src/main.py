@@ -38,7 +38,7 @@ async def root():
 @app.get("/health")
 async def health():
     """Health check endpoint"""
-    return {"status": "healthy"}
+    return {"status": "healthy", "environment": "testing-approval-workflow"}
 
 
 @app.get("/jobs", response_model=list[JobResponse])

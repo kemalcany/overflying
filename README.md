@@ -1,15 +1,62 @@
-# Constellation — GPU Task Orchestrator with Real‑Time Insights
+# Overfly — GPU Task Orchestrator with Real‑Time Insights
 
-A demo platform that schedules GPU jobs, streams live telemetry to a React (TanStack Query) dashboard, and exposes an OpenAPI-first API. Includes a small Go component for usage aggregation. This document tracks the living scope.
+A production-grade platform that schedules GPU jobs, streams live telemetry to a React dashboard, and exposes an OpenAPI-first API. Built as a demonstration project for the Planet Software Engineer position.
+
+[![codecov](https://codecov.io/gh/kemalcany/overflying/graph/badge.svg?token=0GWQP8PF79)](https://codecov.io/gh/kemalcany/overflying)
+
+## What is Constellation?
+
+Constellation demonstrates full-stack development capabilities with a focus on:
+
+- Real-time data streaming and event-driven architecture
+- OpenAPI-first API design with type generation
+- Modern cloud-native deployment (Kubernetes on GKE)
+- Comprehensive testing (80%+ backend coverage)
+- Production DevOps practices (CI/CD, monitoring)
+
+**Status**: Milestone 1 Complete ✅ (Core infrastructure, CRUD operations, deployment, testing)
+
+## Quick Start
+
+```bash
+# Install dependencies
+brew install postgresql@18
+brew services start postgresql@18
+
+# Setup database
+createdb planet
+make venv
+make db-upgrade
+
+# Start API
+cd apps/api
+uvicorn src.main:app --reload
+
+# Start Web (new terminal)
+cd apps/web
+npm install
+npm run dev
+
+# Visit http://localhost:3000
+```
+
+See [Getting Started Guide](docs/002_GETTING_STARTED.md) for detailed instructions.
 
 ## Documentation
 
-- **[Setup Guide](docs/SETUP.md)** - Fresh installation instructions for macOS (no Docker)
-- **[Local Development](docs/LOCAL_DEV.md)** - Running services locally
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to Render, Railway, or Fly.io
-- **[PostgreSQL Quick Reference](docs/PG.md)** - Common psql commands
-- **[Job Description](docs/JOB_DESCRIPTION.md)** - Planet Software Engineer role details
-- **[CRUD Implementation](docs/CRUD.md)** - Complete job CRUD operations with testing strategy
+### Core Documentation
+
+- [Overview](docs/001_OVERVIEW.md) - Project purpose and alignment with Planet
+- [Getting Started](docs/002_GETTING_STARTED.md) - Installation and setup
+- [Architecture](docs/003_ARCHITECTURE.md) - System design and tech stack
+- [Development](docs/004_DEVELOPMENT.md) - Development workflow and testing
+- [Deployment](docs/005_DEPLOYMENT.md) - Production deployment (GKE, Render, etc.)
+- [Roadmap](docs/006_ROADMAP.md) - Future milestones and features
+- [Planet Job Description](docs/007_PLANET_JOB_DESCRIPTION.md) - Role alignment
+
+### Legacy Documentation
+
+Older detailed guides are preserved in [docs/old/](docs/old/) for reference.
 
 ## Tech Stack
 
@@ -139,6 +186,7 @@ The architecture is solid and production-grade. Rather than spreading thin acros
 ### High-Impact Priorities (Week 1)
 
 1. **OpenAPI Spec First** (2-3 hours)
+
    - Define 5-6 core endpoints to drive codegen:
      - `POST /jobs` - Submit job with params
      - `GET /jobs` - List jobs with filters (state, submitted_by)
@@ -148,12 +196,14 @@ The architecture is solid and production-grade. Rather than spreading thin acros
    - Generate TS/Python clients immediately to verify workflow
 
 2. **FastAPI Backend** (Core Features)
+
    - GPU discovery with `pynvml` (simulate if no GPU available)
    - Job submission → Postgres persistence
    - State machine: PENDING → RUNNING → COMPLETED/FAILED
    - WebSocket endpoint multiplexing NATS streams
 
 3. **React Dashboard** (TanStack Query)
+
    - Job submission form (name, params, priority)
    - Job list with real-time status updates
    - GPU status cards (utilization, memory, temp)
@@ -169,6 +219,7 @@ The architecture is solid and production-grade. Rather than spreading thin acros
 ### Planet-Specific Enhancements
 
 **Satellite Imagery Simulation** (Bonus Points)
+
 - Frame jobs as "Process satellite tile at (lat, lon)"
 - Demo workload: image classification on sample tiles (use small dataset)
 - Store tile footprints in PostGIS as `GEOGRAPHY(POLYGON)`
@@ -180,12 +231,14 @@ This directly demonstrates understanding of Planet's satellite imaging domain an
 ### Scope Adjustments
 
 **Defer to Post-Demo:**
+
 - Go usage service (nice-to-have, not critical for initial demo)
 - DuckDB analytics layer (already marked as "later")
 - Full observability stack (keep Prometheus + basic metrics; skip Tempo/Jaeger initially)
 - TanStackDB exploration (experimental, not production-ready yet)
 
 **Keep Simple:**
+
 - 1-2 demo workloads maximum
 - Focus on real-time updates (your differentiator)
 - Ensure `make demo` is impressive with seed data
@@ -193,6 +246,7 @@ This directly demonstrates understanding of Planet's satellite imaging domain an
 ### Testing Strategy (Pragmatic)
 
 Don't over-test for a demo, but show best practices:
+
 - Unit tests for critical paths (job state transitions, queue logic)
 - One Playwright e2e: submit job → observe real-time completion
 - OpenAPI contract validation tests
@@ -201,6 +255,7 @@ Don't over-test for a demo, but show best practices:
 ### Demo & Documentation
 
 **For Interview/Application:**
+
 - **Screencast** (2-3 min): Job submission → real-time updates → GPU metrics → map view
 - **Architecture diagram** (one page): Data flow from UI → API → Worker → NATS → WebSocket → UI
 - **README**: Clear `make demo` that seeds data and opens dashboard
@@ -209,6 +264,7 @@ Don't over-test for a demo, but show best practices:
 ### Job Alignment Strengths
 
 Your tech stack is nearly perfect for Planet's role:
+
 - ✅ React + Python + Go (exact match)
 - ✅ OpenAPI/REST codegen (job requirement)
 - ✅ Complex data visualization (TanStack Query, real-time dashboards)
@@ -238,6 +294,7 @@ Your tech stack is nearly perfect for Planet's role:
 ### Success Metrics
 
 A successful demo shows:
+
 - Submit job via UI → immediately see "PENDING" state
 - Worker picks up job → status updates to "RUNNING" in real-time
 - Logs stream to UI as job executes
@@ -314,3 +371,120 @@ Conventions:
 - Env via `.env` files per app; compose overrides for local dev. Secrets kept out of VCS.
 - Testing: unit tests colocated; e2e tests in `apps/web/e2e` (Playwright) and `infra/k6`.
 - Observability: common OTEL setup in `packages/opentelemetry` to enforce consistent tracing/metrics.
+
+## Live Deployments
+
+- **Staging**: https://staging.api.overfly.ing
+- **Production**: https://production.api.overfly.ing
+- **API Docs**: https://production.api.overfly.ing/docs
+
+## Key Features
+
+### Current (Milestone 1 ✅)
+
+- ✅ FastAPI backend with full CRUD operations
+- ✅ React frontend with TanStack Query
+- ✅ PostgreSQL 18 with Alembic migrations
+- ✅ Comprehensive test suite (pytest + Playwright)
+- ✅ OpenAPI specification with TypeScript codegen
+- ✅ Kubernetes deployment on GKE
+- ✅ CI/CD pipeline with GitHub Actions
+- ✅ Custom domains with SSL/TLS
+
+### Coming Soon (Milestone 2)
+
+- 🔜 Worker service for GPU job execution
+- 🔜 Real-time updates via WebSocket
+- 🔜 NATS event streaming
+- 🔜 Live log streaming
+
+### Future (Milestones 3-4)
+
+- 🔮 Spatial features (PostGIS + deck.gl)
+- 🔮 Go usage service for customer reporting
+- 🔮 OpenTelemetry observability
+- 🔮 DuckDB analytics layer
+
+See [Roadmap](docs/006_ROADMAP.md) for details.
+
+## Project Structure
+
+```
+planet/
+├── apps/
+│   ├── api/          # FastAPI service
+│   ├── web/          # Next.js frontend
+│   ├── worker/       # GPU job runner (future)
+│   └── usage-go/     # Go usage service (future)
+├── packages/
+│   ├── shared-types/ # OpenAPI-generated types
+│   ├── ui/           # Shared UI components
+│   └── opentelemetry/# Observability setup
+├── db/
+│   ├── migrations/   # Alembic migrations
+│   └── seeds/        # Demo data
+├── k8s/
+│   ├── api/          # Kubernetes manifests
+│   └── ingress/      # Ingress + cert-manager
+├── docs/             # Documentation
+└── infra/            # Infrastructure as code
+```
+
+## Planet Role Alignment
+
+This project directly aligns with Planet's Software Engineer role requirements:
+
+| Requirement            | Implementation                                  |
+| ---------------------- | ----------------------------------------------- |
+| React + Python + Go    | ✅ Next.js, FastAPI, Go service (planned)       |
+| OpenAPI codegen        | ✅ OpenAPI-first with automated type generation |
+| Relational databases   | ✅ PostgreSQL 18 with complex queries           |
+| Spatial data           | 🔜 PostGIS + deck.gl (Milestone 4)              |
+| Event-driven pipelines | ✅ Architecture designed for NATS + WebSocket   |
+| CI/CD                  | ✅ GitHub Actions with staging/production       |
+| Customer telemetry     | 🔜 Go usage service (Milestone 5)               |
+
+See [Planet Job Description](docs/007_PLANET_JOB_DESCRIPTION.md) for detailed alignment.
+
+## Technology Highlights
+
+### OpenAPI-First Workflow
+
+```bash
+# 1. Make API changes
+# 2. Check drift
+make openapi-diff
+
+# 3. Update spec
+make openapi-sync
+
+# 4. Generate types
+make codegen
+
+# 5. Use in frontend (automatic type safety!)
+```
+
+### Testing Strategy
+
+- **Backend**: 80%+ coverage with pytest, PostgreSQL test database
+- **Frontend**: Unit tests (Vitest) + E2E tests (Playwright)
+- **CI/CD**: Automated testing on every push
+
+### Cloud-Native Deployment
+
+- Kubernetes Autopilot on GKE
+- Staging + Production environments
+- Automatic SSL/TLS with cert-manager
+- Blue/green deployments via GitHub Actions
+
+## Contributing
+
+This is a portfolio project, but suggestions and feedback are welcome!
+
+1. Create feature branch
+2. Write tests first
+3. Implement feature
+4. Update documentation
+5. Create pull request
+
+See [Development Guide](docs/004_DEVELOPMENT.md) for workflow details.

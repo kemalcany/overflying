@@ -1,4 +1,10 @@
 import type { NextConfig } from 'next'
 
-const config: NextConfig = { reactStrictMode: true }
-export default config
+const nextConfig: NextConfig = {
+  output: 'export', // Add this for static export
+  images: {
+    unoptimized: true, // Required for static export
+  },
+}
+
+export default nextConfig

@@ -16,6 +16,7 @@ echo -e "${BLUE}Setting up Kubernetes secrets for API...${NC}"
 echo -e "${GREEN}Creating staging secrets...${NC}"
 kubectl create secret generic api-secrets \
   --from-literal=database-url="$(gcloud secrets versions access latest --secret=db-url-staging --project=overflying-cluster)" \
+  --from-literal=cors-origins="$(gcloud secrets versions access latest --secret=cors-origin-staging --project=overflying-cluster),http://localhost:3000" \
   --namespace=staging \
   --dry-run=client -o yaml | kubectl apply -f -
 
@@ -23,8 +24,12 @@ kubectl create secret generic api-secrets \
 echo -e "${GREEN}Creating production secrets...${NC}"
 kubectl create secret generic api-secrets \
   --from-literal=database-url="$(gcloud secrets versions access latest --secret=db-url-production --project=overflying-cluster)" \
+  --from-literal=cors-origins="$(gcloud secrets versions access latest --secret=cors-origin-production --project=overflying-cluster)" \
   --namespace=production \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo -e "${GREEN}Secrets created successfully!${NC}"
-echo -e "${BLUE}Note: Secrets are now stored in Kubernetes. Update them if the database credentials change.${NC}"
+echo -e "${BLUE}Secrets now include:${NC}"
+echo -e "  - database-url"
+echo -e "  - cors-origins"
+echo -e "${BLUE}Note: Secrets are now stored in Kubernetes. Update them if credentials change.${NC}"

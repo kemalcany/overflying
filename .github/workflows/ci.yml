@@ -38,6 +38,8 @@ jobs:
           cache-dependency-path: 'apps/api/pyproject.toml'
 
       - name: Install dependencies
+        env:
+          DATABASE_URL: postgresql+psycopg2://test:test@localhost:5433/test_db
         run: |
           cd apps/api
           python -m pip install --upgrade pip
@@ -49,6 +51,7 @@ jobs:
 
       - name: Run tests
         env:
+          DATABASE_URL: postgresql+psycopg2://test:test@localhost:5433/test_db
           TEST_DATABASE_URL: postgresql+psycopg2://test:test@localhost:5433/test_db
         run: |
           cd apps/api

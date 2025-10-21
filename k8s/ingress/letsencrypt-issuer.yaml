@@ -1,0 +1,38 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # ACME server URL for Let's Encrypt production
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email address for ACME registration and certificate expiry notifications
+    email: busy@overfly.ing
+
+    # Name of the secret to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+# Optional: Staging issuer for testing (uses Let's Encrypt staging environment)
+# Staging certificates are not trusted by browsers but have higher rate limits
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: busy@overfly.ing
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

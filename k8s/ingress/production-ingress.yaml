@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-production-ingress
+  namespace: production
+  annotations:
+    # Use cert-manager to provision SSL certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+    # CORS configuration (adjust as needed for your production frontend)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://overfly.ing, https://www.overfly.ing"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Stricter rate limiting for production
+    nginx.ingress.kubernetes.io/rate-limit: "50"
+
+    # Larger body size for file uploads (adjust as needed)
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # Connection timeout settings
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+
+spec:
+  ingressClassName: nginx
+
+  # TLS configuration
+  tls:
+  - hosts:
+    - api.overfly.ing
+    secretName: api-production-tls  # cert-manager will create this secret
+
+  # Routing rules
+  rules:
+  - host: api.overfly.ing
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80

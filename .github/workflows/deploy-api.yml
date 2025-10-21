@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     environment:
-      name: staging
+      name: api-staging
       url: https://staging.api.overfly.ing
 
     steps:
@@ -215,7 +215,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment:
-      name: production
+      name: api-production
       url: https://api.overfly.ing
 
     steps:

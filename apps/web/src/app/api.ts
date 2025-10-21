@@ -1,6 +1,6 @@
 import type { components, paths } from '../../../../packages/shared-types/ts'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 type JobCreate = components['schemas']['JobCreate']
 type JobUpdate = components['schemas']['JobUpdate']

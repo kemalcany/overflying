@@ -2,6 +2,7 @@
 Constellation API - FastAPI service for GPU job orchestration
 """
 
+import os
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -18,11 +19,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000"
-    ],  # Or ["*"] to allow all origins (not recommended for production)
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

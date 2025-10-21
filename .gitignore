@@ -77,3 +77,5 @@ Thumbs.db
 
 # Cesium files (globe)
 /apps/globe/public/cesium
+
+.config

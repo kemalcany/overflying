@@ -165,11 +165,11 @@ db-downgrade:
 
 db-staging-proxy:
 	@echo "Starting Cloud SQL Proxy for staging..."
-	@cloud-sql-proxy overfly-db:us-central1:planet-staging --port 5433
+	@cloud-sql-proxy overflying-db:us-central1:planet-staging --port 5433
 
 db-prod-proxy:
 	@echo "Starting Cloud SQL Proxy for production..."
-	@cloud-sql-proxy overfly-db:us-central1:planet-production --port 5434
+	@cloud-sql-proxy overflying-db:us-central1:planet-production --port 5434
 
 # Not used currently
 db-local-shell:

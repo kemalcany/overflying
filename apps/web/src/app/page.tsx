@@ -7,7 +7,6 @@ import {api, connectJobEvents} from '@/app/api';
 import {DeleteConfirmDialog} from '@/components/DeleteConfirmDialog';
 import {JobDialog} from '@/components/JobDialog';
 import type {JobFormData} from '@/components/JobForm';
-import {SplineScene} from '@/components/SplineScene';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -150,7 +149,7 @@ const HomePage = () => {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJob, setDeletingJob] = useState<Job | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
-  const [lastEvent, setLastEvent] = useState<any>(null);
+  const [_lastEvent, setLastEvent] = useState<any>(null);
 
   const {data: jobs, isLoading} = useQuery({
     queryKey: ['jobs'],
@@ -170,7 +169,7 @@ const HomePage = () => {
           toast.info(`Job ${event.job_id.slice(0, 8)}: ${event.state}`);
         }
       },
-      error => {
+      _error => {
         toast.error('SSE connection error');
         setSseConnected(false);
       },

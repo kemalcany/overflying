@@ -14,10 +14,20 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
+        project: './tsconfig.json',
       },
     },
     plugins: {
       '@typescript-eslint': tseslint,
+    },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+        node: true,
+      },
     },
     rules: {
       // React 19 / Next.js doesn't require React import
@@ -35,6 +45,19 @@ export default [
           ignoreRestSiblings: true,
         },
       ],
+      // Allow TypeScript extensions in imports
+      'import/extensions': [
+        'error',
+        'always',
+        {
+          ts: 'never',
+          tsx: 'never',
+          js: 'never',
+          jsx: 'never',
+        },
+      ],
+      // Allow console.warn and console.error, but not console.log in production
+      'no-console': ['error', {allow: ['warn', 'error']}],
     },
   },
 ]

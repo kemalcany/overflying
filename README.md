@@ -53,6 +53,7 @@ See [Getting Started Guide](docs/002_GETTING_STARTED.md) for detailed instructio
 - [Deployment](docs/005_DEPLOYMENT.md) - Production deployment (GKE, Render, etc.)
 - [Roadmap](docs/006_ROADMAP.md) - Future milestones and features
 - [Planet Job Description](docs/007_PLANET_JOB_DESCRIPTION.md) - Role alignment
+- [NATS Integration](docs/008_NATS_INTEGRATION.md) - **NEW!** Real-time messaging with JetStream + SSE
 
 ### Legacy Documentation
 

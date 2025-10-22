@@ -1,11 +1,14 @@
 """Worker main loop"""
 
+import asyncio
 import time
+from datetime import datetime
 
 from config import settings
 from database import SessionLocal
 from executor import JobExecutor
 from gpu_manager import GPUManager
+from nats_client import NATSManager
 from sqlalchemy import text
 
 
@@ -14,7 +17,20 @@ class Worker:
         self.gpu_manager = GPUManager(simulation=settings.gpu_simulation)
         self.executor = JobExecutor()
         self.db = SessionLocal()
+        self.nats = NATSManager(settings.nats_url)
         print(f"Worker started with {len(self.gpu_manager.gpus)} GPUs")
+
+    async def publish_job_event(self, job_id: str, state: str, metadata: dict = None):
+        """Publish job state change event to NATS JetStream"""
+        event_data = {
+            "job_id": str(job_id),
+            "state": state,
+            "timestamp": datetime.utcnow().isoformat(),
+            **(metadata or {}),
+        }
+
+        subject = f"jobs.{job_id}.{state}"
+        await self.nats.publish(subject, event_data)
 
     def poll_jobs(self):
         """Poll for jobs using SKIP LOCKED pattern"""
@@ -35,9 +51,12 @@ class Worker:
         self.db.commit()
         return result.fetchone()
 
-    def process_job(self, job_row):
+    async def process_job(self, job_row):
         """Process a single job"""
         job_id, job_name, params = job_row
+
+        # Publish job started event
+        await self.publish_job_event(job_id, "running", {"name": job_name})
 
         # Get available GPU
         gpu = self.gpu_manager.get_available_gpu()
@@ -48,6 +67,7 @@ class Worker:
                 {"id": job_id},
             )
             self.db.commit()
+            await self.publish_job_event(job_id, "queued", {"reason": "no_gpu_available"})
             return
 
         # Allocate GPU and execute
@@ -62,35 +82,57 @@ class Worker:
                 {"state": new_state, "id": job_id},
             )
             self.db.commit()
+
+            # Publish completion event
+            await self.publish_job_event(
+                job_id,
+                new_state,
+                {
+                    "name": job_name,
+                    "gpu_id": gpu.id,
+                    "execution_time": result.get("execution_time", 0),
+                },
+            )
+
+        except Exception as e:
+            # Publish failure event
+            await self.publish_job_event(job_id, "failed", {"error": str(e)})
+            raise
         finally:
             self.gpu_manager.release_gpu(gpu.id)
 
-    def run(self):
+    async def run(self):
         """Main worker loop"""
         print("Worker running, polling every", settings.poll_interval, "seconds...")
 
-        while True:
-            try:
-                # Update GPU metrics
-                self.gpu_manager.update_metrics()
+        # Connect to NATS and ensure stream exists
+        await self.nats.connect()
+        await self.nats.ensure_stream("JOBS", ["jobs.>"])
 
-                # Poll for job
-                job = self.poll_jobs()
-                if job:
-                    self.process_job(job)
-                else:
-                    time.sleep(settings.poll_interval)
+        try:
+            while True:
+                try:
+                    # Update GPU metrics
+                    self.gpu_manager.update_metrics()
 
-            except KeyboardInterrupt:
-                print("\nShutting down worker...")
-                break
-            except Exception as e:
-                print(f"Error: {e}")
-                time.sleep(settings.poll_interval)
+                    # Poll for job
+                    job = self.poll_jobs()
+                    if job:
+                        await self.process_job(job)
+                    else:
+                        await asyncio.sleep(settings.poll_interval)
 
-        self.db.close()
+                except KeyboardInterrupt:
+                    print("\nShutting down worker...")
+                    break
+                except Exception as e:
+                    print(f"Error: {e}")
+                    await asyncio.sleep(settings.poll_interval)
+        finally:
+            await self.nats.disconnect()
+            self.db.close()
 
 
 if __name__ == "__main__":
     worker = Worker()
-    worker.run()
+    asyncio.run(worker.run())

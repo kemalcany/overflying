@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
+    # NATS JetStream
+    nats_url: str = "nats://localhost:4222"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

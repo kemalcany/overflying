@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/app/api'
+import { api, connectJobEvents } from '@/app/api'
 import styled from '@emotion/styled'
 import { toast } from 'sonner'
 import { JobDialog } from '@/components/JobDialog'
@@ -127,11 +127,35 @@ const HomePage = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [deletingJob, setDeletingJob] = useState<Job | null>(null)
+  const [sseConnected, setSseConnected] = useState(false)
+  const [lastEvent, setLastEvent] = useState<any>(null)
 
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['jobs'],
     queryFn: api.getJobs,
   })
+
+  useEffect(() => {
+    if (!sseConnected) return
+
+    const eventSource = connectJobEvents(
+      (event) => {
+        setLastEvent(event)
+        if (event.job_id && event.state) {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.info(`Job ${event.job_id.slice(0, 8)}: ${event.state}`)
+        }
+      },
+      (error) => {
+        toast.error('SSE connection error')
+        setSseConnected(false)
+      }
+    )
+
+    return () => {
+      eventSource.close()
+    }
+  }, [sseConnected, queryClient])
 
   const createMutation = useMutation({
     mutationFn: api.createJob,
@@ -201,10 +225,20 @@ const HomePage = () => {
     <Container>
       <Header>
         <Title>Dashboard</Title>
-        <CreateButton onClick={() => setIsCreateDialogOpen(true)}>Create Job</CreateButton>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <CreateButton
+            onClick={() => setSseConnected(!sseConnected)}
+            style={{ background: sseConnected ? '#f44336' : '#4caf50' }}
+          >
+            {sseConnected ? '🔴 Stop SSE' : '🟢 Start SSE'}
+          </CreateButton>
+          <CreateButton onClick={() => setIsCreateDialogOpen(true)}>Create Job</CreateButton>
+        </div>
       </Header>
 
+      {/*
       <SplineScene scene="https://prod.spline.design/Tx1XLWOMrLaBfrR6/scene.splinecode" />
+      */}
 
       {jobs && jobs.length > 0 ? (
         <JobGrid>

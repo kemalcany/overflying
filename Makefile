@@ -5,6 +5,8 @@
 .PHONY: db-prod-init db-prod-migrate db-prod-upgrade db-prod-proxy
 .PHONY: openapi-sync openapi-validate openapi-diff codegen lint fmt test ci
 .PHONY: test-db-up test-db-down test-api test-worker
+.PHONY: demo-nats demo-nats-install demo-nats-check demo-all nats-monitor
+.PHONY: nats-purge nats-info
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -50,6 +52,13 @@ help:
 	@echo "  make api [ENV=...]         - Run API service (default: development)"
 	@echo "  make worker [ENV=...]      - Run worker service (default: development)"
 	@echo "  make web           - Run web app locally (dev)"
+	@echo ""
+	@echo "NATS Demo (Quick Start):"
+	@echo "  make demo-nats-install     - Install dependencies (one-time setup)"
+	@echo "  make demo-nats-check       - Check all services are ready"
+	@echo "  make demo-all              - Start all services in background + run demo"
+	@echo "  make demo-nats             - Run NATS integration demo script"
+	@echo "  make nats-monitor          - Monitor NATS stream in real-time"
 	@echo ""
 	@echo "Database Commands (Environment-aware):"
 	@echo "  make db-init [ENV=...]       - Initialize database (development/staging/production)"
@@ -244,3 +253,125 @@ test: test-api test-worker
 
 ci:
 	@echo "CI local placeholder"
+
+# ============================================================================
+# NATS Demo Commands
+# ============================================================================
+
+demo-nats-install:
+	@echo "Installing dependencies for NATS demo..."
+	@echo ""
+	@echo "1. Installing API dependencies..."
+	@cd apps/api && pip install -e . -q
+	@echo "   ✓ API ready"
+	@echo ""
+	@echo "2. Installing Worker dependencies..."
+	@cd apps/worker && pip install -e . -q
+	@echo "   ✓ Worker ready"
+	@echo ""
+	@echo "3. Installing Frontend dependencies..."
+	@cd apps/web && bun install --silent
+	@echo "   ✓ Frontend ready"
+	@echo ""
+	@echo "✓ All dependencies installed!"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Ensure database is set up: make db-upgrade"
+	@echo "  2. Check services: make demo-nats-check"
+	@echo "  3. Run demo: make demo-all"
+
+demo-nats-check:
+	@echo "Checking NATS demo prerequisites..."
+	@echo ""
+	@echo "1. Checking Docker services..."
+	@docker ps --filter "name=planet-dev-postgres" --format "{{.Names}}" | grep -q planet-dev-postgres && echo "   ✓ PostgreSQL running" || echo "   ✗ PostgreSQL not running (run: make dev)"
+	@docker ps --filter "name=planet-dev-nats" --format "{{.Names}}" | grep -q planet-dev-nats && echo "   ✓ NATS running" || echo "   ✗ NATS not running (run: make dev)"
+	@echo ""
+	@echo "2. Checking NATS health..."
+	@curl -s http://localhost:8222/varz > /dev/null && echo "   ✓ NATS API responding" || echo "   ✗ NATS not healthy"
+	@echo ""
+	@echo "3. Checking database connection..."
+	@docker exec planet-dev-postgres pg_isready -U postgres > /dev/null 2>&1 && echo "   ✓ Database ready" || echo "   ✗ Database not ready"
+	@echo ""
+	@echo "All checks complete!"
+
+demo-all:
+	@echo "=================================================="
+	@echo "Starting NATS Demo (All Services)"
+	@echo "=================================================="
+	@echo ""
+	@echo "💡 This will start API, Worker, and Frontend in background"
+	@echo "   Press Ctrl+C to stop monitoring, then run 'make clean' to stop services"
+	@echo ""
+	@sleep 2
+	@echo "1. Starting infrastructure (PostgreSQL + NATS)..."
+	@$(MAKE) dev
+	@echo "   Waiting for services to be healthy..."
+	@sleep 5
+	@docker exec planet-dev-postgres pg_isready -U postgres || (echo "PostgreSQL not ready" && exit 1)
+	@curl -s http://localhost:8222/varz > /dev/null || (echo "NATS not ready" && exit 1)
+	@echo "   ✓ Infrastructure ready"
+	@echo ""
+	@echo "2. Starting API in background..."
+	@set -a; . $(ROOT_ENV); set +a; \
+	cd apps/api && nohup python3 -m src.run > /tmp/planet-api.log 2>&1 & echo $$! > /tmp/planet-api.pid
+	@echo "   Waiting for API to start..."
+	@sleep 5
+	@curl -s http://localhost:8000/health > /dev/null && echo "   ✓ API running" || echo "   ⚠ API may still be starting (check logs: tail -f /tmp/planet-api.log)"
+	@echo ""
+	@echo "3. Starting Worker in background..."
+	@set -a; . $(ROOT_ENV); set +a; \
+	cd apps/worker && nohup python3 src/main.py > /tmp/planet-worker.log 2>&1 & echo $$! > /tmp/planet-worker.pid
+	@sleep 3
+	@echo "   ✓ Worker running (logs: tail -f /tmp/planet-worker.log)"
+	@echo ""
+	@echo "4. Starting Frontend in background..."
+	@cd apps/web && nohup bun dev > /tmp/planet-web.log 2>&1 & echo $$! > /tmp/planet-web.pid
+	@sleep 4
+	@echo "   ✓ Frontend running (logs: tail -f /tmp/planet-web.log)"
+	@echo ""
+	@echo "=================================================="
+	@echo "✓ All services started!"
+	@echo "=================================================="
+	@echo ""
+	@echo "Services:"
+	@echo "  - API:      http://localhost:8000"
+	@echo "  - Frontend: http://localhost:3000"
+	@echo "  - NATS UI:  http://localhost:8222"
+	@echo ""
+	@echo "Logs:"
+	@echo "  - API:      tail -f /tmp/planet-api.log"
+	@echo "  - Worker:   tail -f /tmp/planet-worker.log"
+	@echo "  - Frontend: tail -f /tmp/planet-web.log"
+	@echo ""
+	@echo "💡 TIP: Open another terminal and run: tail -f /tmp/planet-*.log"
+	@echo ""
+	@echo "Now running demo in 3 seconds..."
+	@sleep 3
+	@$(MAKE) demo-nats
+
+demo-nats:
+	@echo "=================================================="
+	@echo "NATS Integration Demo"
+	@echo "=================================================="
+	@echo ""
+	@echo "Creating 3 test jobs and monitoring real-time events..."
+	@echo ""
+	@./demo-nats.sh || echo "Demo script failed. Check if services are running with: make demo-nats-check"
+
+nats-monitor:
+	@echo "Monitoring NATS JetStream in real-time..."
+	@echo "Press Ctrl+C to stop"
+	@echo ""
+	@curl -N http://localhost:8222/jsz?streams=1 2>/dev/null | python3 -m json.tool || \
+		echo "NATS not responding. Start with: make dev"
+
+nats-purge:
+	@echo "Purging JOBS stream..."
+	@curl -X POST "http://localhost:8000/admin/purge-stream?stream_name=JOBS" 2>/dev/null && \
+	echo "✓ Stream purged" || \
+	echo "✗ Failed. Make sure API is running: make api"
+
+nats-info:
+	@echo "JetStream Info:"
+	@curl -s http://localhost:8222/jsz | jq '.'		

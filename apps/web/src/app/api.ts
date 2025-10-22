@@ -38,6 +38,38 @@ export const api = {
     }),
 }
 
+/**
+ * Connect to SSE endpoint for real-time job updates
+ * Returns an EventSource instance that can be closed with .close()
+ */
+export const connectJobEvents = (onMessage: (event: any) => void, onError?: (error: Event) => void) => {
+  const eventSource = new (EventSource as any)(`${API_URL}/events`)
+
+  eventSource.onmessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.data)
+      onMessage(data)
+      console.log('[SSE] Message received:', data)
+    } catch (error) {
+      console.error('[SSE] Failed to parse event data:', error)
+    }
+  }
+
+  eventSource.onerror = (error: any) => {
+    console.error('[SSE] Connection error:', error)
+    if (onError) {
+      onError(error)
+    }
+  }
+
+  eventSource.addEventListener('open', () => {
+    console.log('[SSE] Connection established')
+  })
+
+  return eventSource
+}
+
+// Legacy WebSocket function (kept for backward compatibility)
 export const connectWebSocket = (onMessage: (job: JobResponse) => void) => {
   const ws = new WebSocket(`${API_URL.replace('http', 'ws')}/ws`)
   ws.onmessage = (event) => onMessage(JSON.parse(event.data))

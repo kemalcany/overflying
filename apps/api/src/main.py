@@ -2,21 +2,53 @@
 Constellation API - FastAPI service for GPU job orchestration
 """
 
+import json
 import os
+from contextlib import asynccontextmanager
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from .config import settings
 from .database import get_db
 from .models import Job
+from .nats_client import NATSManager
 from .schemas import JobCreate, JobResponse, JobUpdate
+
+# Global NATS manager instance
+nats_manager = NATSManager(settings.nats_url)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI lifespan event handler"""
+    # Startup: Connect to NATS (non-blocking, allows API to start without NATS)
+    try:
+        await nats_manager.connect()
+        await nats_manager.ensure_stream("JOBS", ["jobs.>"])
+        print("[API] Connected to NATS JetStream")
+    except Exception as e:
+        print(f"[API] WARNING: Could not connect to NATS: {e}")
+        print("[API] API will run without real-time updates. Start NATS to enable SSE.")
+
+    yield
+
+    # Shutdown: Disconnect from NATS
+    try:
+        await nats_manager.disconnect()
+        print("[API] Disconnected from NATS")
+    except:
+        pass
+
 
 app = FastAPI(
     title="Constellation API",
     description="GPU task orchestrator with real-time insights",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
@@ -100,3 +132,87 @@ async def delete_job(job_id: UUID, db: Session = Depends(get_db)):
     db.delete(job)
     db.commit()
     return None
+
+
+@app.post("/admin/purge-stream")
+async def purge_stream(stream_name: str = "JOBS"):
+    """Purge all messages from a JetStream stream (dev only)"""
+    try:
+        await nats_manager.purge_stream(stream_name)
+        return {"message": f"Stream {stream_name} purged"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/events")
+async def job_events_stream(request: Request):
+    """
+    Server-Sent Events (SSE) endpoint for real-time job updates.
+    Subscribes to NATS JetStream and streams events to connected clients.
+    """
+
+    async def event_generator():
+        """Generate SSE events from NATS JetStream"""
+        # Check if NATS is connected
+        if not nats_manager.nc or not nats_manager.nc.is_connected:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'NATS not available. Start NATS and restart API.'})}\n\n"
+            return
+
+        # Create a unique consumer for this SSE connection
+        consumer_name = f"api-sse-{id(request)}"
+
+        try:
+            # Subscribe to NATS JetStream
+            await nats_manager.create_consumer(
+                "JOBS", consumer_name, filter_subject="jobs.>"
+            )
+            psub = await nats_manager.js.pull_subscribe_bind(
+                durable=consumer_name,
+                stream="JOBS",
+            )
+
+            # Send initial connection event
+            yield f"data: {json.dumps({'type': 'connected', 'message': 'SSE stream established'})}\n\n"
+
+            # Stream events to client
+            while True:
+                # Check if client disconnected
+                if await request.is_disconnected():
+                    print(f"[SSE] Client disconnected: {consumer_name}")
+                    break
+
+                try:
+                    # Pull messages from NATS with timeout
+                    msgs = await psub.fetch(batch=1, timeout=1.0)
+
+                    for msg in msgs:
+                        data = json.loads(msg.data.decode())
+                        # Format as SSE event
+                        yield f"data: {json.dumps(data)}\n\n"
+                        await msg.ack()
+
+                except TimeoutError:
+                    # Send keepalive comment every second to prevent connection timeout
+                    yield ": keepalive\n\n"
+                    continue
+
+        except Exception as e:
+            print(f"[SSE] Error in event stream: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        finally:
+            # Cleanup: Delete the consumer
+            try:
+                await nats_manager.js.delete_consumer("JOBS", consumer_name)
+                print(f"[SSE] Cleaned up consumer: {consumer_name}")
+            except:
+                pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )

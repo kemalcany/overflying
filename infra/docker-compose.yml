@@ -24,10 +24,18 @@ services:
     image: nats:2
     container_name: planet-dev-nats
     ports:
-      - '4222:4222'
-      - '8222:8222'
-    networks:
-      - planet-dev
+      - '4222:4222' # Client connections
+      - '8222:8222' # HTTP monitoring
+    command:
+      - '-js' # Enable JetStream
+      - '-m' # Enable monitoring
+      - '8222' # Monitoring port
+      - '-D' # Enable debug logging
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:8222/healthz']
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   planet_pgdata:

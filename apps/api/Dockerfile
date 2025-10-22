@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pydantic-settings>=2.0.0
 
 # Runtime stage
-FROM python:3.11-slim
+FROM python:3.11-slim AS production
 
 WORKDIR /app
 

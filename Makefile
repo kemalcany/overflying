@@ -241,8 +241,8 @@ test-db-down:
 
 test-api: test-db-up
 	@echo "Running API tests..."
-	@cd apps/api && python3 -m pip install -q -e ".[dev]" && \
-			TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" pytest
+	@cd apps/api && poetry install --with dev && \
+					TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" poetry run pytest
 	@echo "✓ API tests complete"
 
 test-web:

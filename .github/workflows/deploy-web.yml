@@ -60,13 +60,23 @@ jobs:
         working-directory: apps/web
         env:
           NEXT_PUBLIC_API_URL: ${{ steps.api-url.outputs.url }}
-        run: bun run test:coverage
+        run: |
+          bun install --frozen-lockfile
+          npm install @rollup/rollup-linux-x64-gnu --no-save
+          bun run test:coverage
+
+      - name: List coverage files
+        if: always()
+        run: |
+          echo "=== Coverage directory contents ==="
+          ls -la apps/web/coverage/ || echo "Coverage directory not found"
+          find apps/web/coverage -type f || echo "No coverage files found"
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v5
         if: always()
         with:
-          files: ./apps/web/coverage/coverage-final.json
+          directory: ./apps/web/coverage
           flags: web
           name: web-coverage
           fail_ci_if_error: false

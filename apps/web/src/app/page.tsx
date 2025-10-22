@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { JobDialog } from '@/components/JobDialog'
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import type { JobFormData } from '@/components/JobForm'
+import { SplineScene } from '@/components/SplineScene'
 
 const Container = styled.div`
   max-width: 1200px;
@@ -202,6 +203,8 @@ const HomePage = () => {
         <Title>Dashboard</Title>
         <CreateButton onClick={() => setIsCreateDialogOpen(true)}>Create Job</CreateButton>
       </Header>
+
+      <SplineScene scene="https://prod.spline.design/Tx1XLWOMrLaBfrR6/scene.splinecode" />
 
       {jobs && jobs.length > 0 ? (
         <JobGrid>

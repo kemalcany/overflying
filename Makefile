@@ -389,7 +389,7 @@ demo-nats:
 	@echo ""
 	@echo "Creating 3 test jobs and monitoring real-time events..."
 	@echo ""
-	@./packages/utils/demo-nats.sh || echo "Demo script failed. Check if services are running with: make demo-nats-check"
+	@./scripts/demo-nats.sh || echo "Demo script failed. Check if services are running with: make demo-nats-check"
 
 nats-monitor:
 	@echo "Monitoring NATS JetStream in real-time..."

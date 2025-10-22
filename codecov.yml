@@ -18,6 +18,10 @@ flags:
     paths:
       - apps/web/
     carryforward: true
+  worker:
+    paths:
+      - apps/worker/
+    carryforward: true
 
 comment:
   layout: "header, flags, files"

@@ -94,7 +94,7 @@ bun dev
 
 **Option A: Use the demo script**
 ```bash
-./demo-nats.sh
+./scripts/demo-nats.sh
 ```
 
 **Option B: Manual test**

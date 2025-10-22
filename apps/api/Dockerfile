@@ -21,7 +21,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
     sqlalchemy>=2.0.0 \
     psycopg2-binary>=2.9.0 \
     pydantic>=2.0.0 \
-    pydantic-settings>=2.0.0
+    pydantic-settings>=2.0.0 \
+    nats-py>=2.9.0
 
 # Runtime stage
 FROM python:3.11-slim AS production

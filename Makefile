@@ -4,7 +4,7 @@
 .PHONY: db-staging-init db-staging-migrate db-staging-upgrade db-staging-proxy
 .PHONY: db-prod-init db-prod-migrate db-prod-upgrade db-prod-proxy
 .PHONY: openapi-sync openapi-validate openapi-diff codegen lint fmt test ci
-.PHONY: test-db-up test-db-down test-api test-worker
+.PHONY: test-db-up test-db-down test-api test-worker test-web
 .PHONY: demo-nats demo-nats-install demo-nats-check demo-all nats-monitor
 .PHONY: nats-purge nats-info
 
@@ -84,6 +84,7 @@ help:
 	@echo "  make test-db-up    - Start test database (Docker)"
 	@echo "  make test-db-down  - Stop test database"
 	@echo "  make test-api      - Run API tests (starts test DB if needed)"
+	@echo "  make test-web      - Run Web tests"
 	@echo "  make test-worker   - Run worker tests (placeholder)"
 	@echo "  make test          - Run all tests"	
 
@@ -244,6 +245,11 @@ test-api: test-db-up
 			TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" pytest
 	@echo "✓ API tests complete"
 
+test-web:
+	@echo "Running Web tests..."
+	@cd apps/web && bun install --silent && bun run test
+	@echo "✓ Web tests complete"
+
 test-worker:
 	@echo "Running worker tests (placeholder)..."
 	@cd apps/worker && echo "No tests yet"
@@ -357,7 +363,7 @@ demo-nats:
 	@echo ""
 	@echo "Creating 3 test jobs and monitoring real-time events..."
 	@echo ""
-	@./demo-nats.sh || echo "Demo script failed. Check if services are running with: make demo-nats-check"
+	@./packages/utils/demo-nats.sh || echo "Demo script failed. Check if services are running with: make demo-nats-check"
 
 nats-monitor:
 	@echo "Monitoring NATS JetStream in real-time..."

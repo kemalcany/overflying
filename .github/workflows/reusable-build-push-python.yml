@@ -1,0 +1,81 @@
+name: Build and Push Python App
+
+on:
+  workflow_call:
+    inputs:
+      app_path:
+        required: true
+        type: string
+      image_name:
+        required: true
+        type: string
+      project_id:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      registry:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+    secrets:
+      GCP_SA_KEY:
+        required: true
+    outputs:
+      image_tag:
+        value: ${{ jobs.build.outputs.image_tag }}
+      image_latest:
+        value: ${{ jobs.build.outputs.image_latest }}
+
+jobs:
+  build:
+    name: Build and Push
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_latest: ${{ steps.meta.outputs.latest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker to use gcloud
+        run: |
+          gcloud auth configure-docker ${{ inputs.registry }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        run: |
+          echo "tags=${{ inputs.registry }}/${{ inputs.project_id }}/${{ inputs.repository }}/${{ inputs.image_name }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "latest=${{ inputs.registry }}/${{ inputs.project_id }}/${{ inputs.repository }}/${{ inputs.image_name }}:latest" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          cd ${{ inputs.app_path }}
+          docker build -t ${{ steps.meta.outputs.tags }} -t ${{ steps.meta.outputs.latest }} --target production .
+
+      - name: Push Docker image to Artifact Registry
+        run: |
+          docker push ${{ steps.meta.outputs.tags }}
+          docker push ${{ steps.meta.outputs.latest }}
+
+      - name: Build Success
+        run: |
+          echo "========================================="
+          echo "   DOCKER IMAGE BUILT & PUSHED!"
+          echo "========================================="
+          echo "Image: ${{ steps.meta.outputs.tags }}"
+          echo "Latest: ${{ steps.meta.outputs.latest }}"
+          echo "========================================="

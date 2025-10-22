@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-staging
+  namespace: staging
+  labels:
+    app: worker
+    environment: staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+      environment: staging
+  template:
+    metadata:
+      labels:
+        app: worker
+        environment: staging
+    spec:
+      containers:
+      - name: worker
+        image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/worker:latest
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: worker-secrets
+              key: DATABASE_URL
+        - name: NATS_URL
+          value: "nats://nats.infrastructure.svc.cluster.local:4222"
+        - name: GPU_SIMULATION
+          value: "true"
+        - name: POLL_INTERVAL
+          value: "5"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        # Worker doesn't have health endpoints, so we check process
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-service
+  namespace: staging
+  labels:
+    app: worker
+    environment: staging
+spec:
+  selector:
+    app: worker
+    environment: staging
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

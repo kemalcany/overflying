@@ -1,4 +1,4 @@
-# Shared test infrastructure for API
+# Shared test infrastructure for Worker
 # Uses centralized configs from infra/docker-compose/
 # The test database and NATS broker are defined in infra/ and shared
 # across all Python services (API, Worker, etc.)
@@ -7,8 +7,8 @@ include:
   - ../../infra/docker-compose/test-db.yml
   - ../../infra/docker-compose/test-nats.yml
 
-# Note: For local testing, you typically don't need to build the API container
-# Just run pytest directly: cd apps/api && pytest
+# Note: For local testing, you typically don't need to build the Worker container
+# Just run pytest directly: cd apps/worker && pytest
 # The shared test-db and test-nats services will be available on:
 #   - PostgreSQL: localhost:5433
 #   - NATS: localhost:4222 (client), localhost:8222 (monitoring)

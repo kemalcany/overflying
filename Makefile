@@ -7,6 +7,9 @@
 .PHONY: test-db-up test-db-down test-api test-worker test-web
 .PHONY: demo-nats demo-nats-install demo-nats-check demo-all nats-monitor
 .PHONY: nats-purge nats-info
+.PHONY: gcp-auth gcp-deploy-all gcp-deploy-nats gcp-deploy-worker
+.PHONY: gcp-status gcp-logs-api gcp-logs-worker gcp-logs-nats
+.PHONY: test-api-local test-worker-local test-all-local
 
 PROJECT=planet
 COMPOSE=cd infra && docker compose
@@ -86,7 +89,22 @@ help:
 	@echo "  make test-api      - Run API tests (starts test DB if needed)"
 	@echo "  make test-web      - Run Web tests"
 	@echo "  make test-worker   - Run worker tests (placeholder)"
-	@echo "  make test          - Run all tests"	
+	@echo "  make test          - Run all tests"
+	@echo ""
+	@echo "Local Testing (Plan A - Shared Infrastructure):"
+	@echo "  make test-api-local    - Start API test infrastructure (shared DB + NATS)"
+	@echo "  make test-worker-local - Start Worker test infrastructure (shared DB + NATS)"
+	@echo "  make test-all-local    - Start all test infrastructure"
+	@echo ""
+	@echo "GCP Deployment (Plan A):"
+	@echo "  make gcp-auth          - Authenticate to GCP and get GKE credentials"
+	@echo "  make gcp-deploy-all    - Deploy all infrastructure (NATS + Worker)"
+	@echo "  make gcp-deploy-nats   - Deploy NATS to infrastructure namespace"
+	@echo "  make gcp-deploy-worker - Deploy Worker to staging and production"
+	@echo "  make gcp-status        - Show status of all GKE resources"
+	@echo "  make gcp-logs-api      - View API logs from GKE"
+	@echo "  make gcp-logs-worker   - View Worker logs from GKE"
+	@echo "  make gcp-logs-nats     - View NATS logs from GKE"	
 
 dev: up
 
@@ -227,22 +245,25 @@ fmt:
 	@echo "Formatting complete!"
 
 test-db-up:
-	@echo "Starting test database..."
+	@echo "Starting shared test infrastructure (PostgreSQL + NATS)..."
 	@cd apps/api && docker compose -f docker-compose.test.yml up -d
-	@echo "Waiting for test DB to be ready..."
-	@sleep 3
-	@docker exec constellation-test-db pg_isready -U test || (echo "Test DB not ready" && exit 1)
-	@echo "✓ Test database ready"
+	@echo "Waiting for services to be ready..."
+	@sleep 5
+	@docker exec api-test-db pg_isready -U test > /dev/null 2>&1 || (echo "Test DB not ready" && exit 1)
+	@echo "✓ Test infrastructure ready (PostgreSQL on :5433, NATS on :4222)"
 
 test-db-down:
-	@echo "Stopping test database..."
+	@echo "Stopping shared test infrastructure..."
 	@cd apps/api && docker compose -f docker-compose.test.yml down
-	@echo "✓ Test database stopped"
+	@echo "✓ Test infrastructure stopped"
 
 test-api: test-db-up
 	@echo "Running API tests..."
 	@cd apps/api && poetry install --with dev && \
-					TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" poetry run pytest
+		DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" \
+		TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" \
+		NATS_URL="nats://localhost:4222" \
+		poetry run pytest
 	@echo "✓ API tests complete"
 
 test-web:
@@ -250,9 +271,14 @@ test-web:
 	@cd apps/web && bun install --silent && bun run test
 	@echo "✓ Web tests complete"
 
-test-worker:
-	@echo "Running worker tests (placeholder)..."
-	@cd apps/worker && echo "No tests yet"
+test-worker: test-db-up
+	@echo "Running Worker tests..."
+	@cd apps/worker && poetry install --with dev && \
+		DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" \
+		TEST_DATABASE_URL="postgresql+psycopg2://test:test@localhost:5433/test_db" \
+		NATS_URL="nats://localhost:4222" \
+		poetry run pytest
+	@echo "✓ Worker tests complete"
 
 test: test-api test-worker
 	@echo "✓ All tests complete"
@@ -380,4 +406,125 @@ nats-purge:
 
 nats-info:
 	@echo "JetStream Info:"
-	@curl -s http://localhost:8222/jsz | jq '.'		
+	@curl -s http://localhost:8222/jsz | jq '.'
+
+# ============================================================================
+# GCP Deployment Commands (Plan A Infrastructure)
+# ============================================================================
+
+GCP_PROJECT=overflying-cluster
+GCP_REGION=europe-west1
+GCP_CLUSTER=overflying-autopilot
+
+gcp-auth:
+	@echo "Authenticating to GCP and getting GKE credentials..."
+	gcloud auth login
+	gcloud config set project $(GCP_PROJECT)
+	gcloud container clusters get-credentials $(GCP_CLUSTER) \
+		--region=$(GCP_REGION) \
+		--project=$(GCP_PROJECT)
+	@echo "✓ Authenticated and connected to GKE cluster"
+
+gcp-deploy-all:
+	@echo "Deploying all infrastructure to GKE..."
+	@chmod +x scripts/deploy-infrastructure.sh
+	@./scripts/deploy-infrastructure.sh
+
+gcp-deploy-nats:
+	@echo "Deploying NATS to GKE infrastructure namespace..."
+	kubectl create namespace infrastructure --dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -f k8s/infrastructure/nats-deployment.yaml
+	kubectl wait --for=condition=ready pod -l app=nats -n infrastructure --timeout=120s
+	@echo "✓ NATS deployed successfully"
+	@echo ""
+	@echo "Verify with:"
+	@echo "  kubectl get pods -n infrastructure"
+	@echo "  kubectl logs -n infrastructure -l app=nats"
+
+gcp-deploy-worker:
+	@echo "Deploying Worker to GKE..."
+	@echo ""
+	@echo "⚠️  Make sure DATABASE_URL_STAGING and DATABASE_URL_PRODUCTION are set!"
+	@echo ""
+	@if [ -z "$$DATABASE_URL_STAGING" ] || [ -z "$$DATABASE_URL_PRODUCTION" ]; then \
+		echo "Error: Set environment variables first:"; \
+		echo "  export DATABASE_URL_STAGING='postgresql://...'"; \
+		echo "  export DATABASE_URL_PRODUCTION='postgresql://...'"; \
+		exit 1; \
+	fi
+	@echo "Setting up secrets..."
+	cd k8s/worker && chmod +x setup-secrets.sh && ./setup-secrets.sh
+	@echo "Deploying to staging..."
+	kubectl apply -f k8s/worker/staging-deployment.yaml
+	@echo "Deploying to production..."
+	kubectl apply -f k8s/worker/production-deployment.yaml
+	@echo "✓ Worker deployed successfully"
+	@echo ""
+	@echo "Verify with:"
+	@echo "  kubectl get pods -n staging -l app=worker"
+	@echo "  kubectl get pods -n production -l app=worker"
+
+gcp-status:
+	@echo "=================================================="
+	@echo "GCP Infrastructure Status"
+	@echo "=================================================="
+	@echo ""
+	@echo "Infrastructure Namespace (NATS):"
+	@kubectl get all -n infrastructure
+	@echo ""
+	@echo "Staging Namespace:"
+	@kubectl get all -n staging
+	@echo ""
+	@echo "Production Namespace:"
+	@kubectl get all -n production
+
+gcp-logs-api:
+	@echo "API logs (staging):"
+	@kubectl logs -n staging -l app=api --tail=50
+
+gcp-logs-worker:
+	@echo "Worker logs (staging):"
+	@kubectl logs -n staging -l app=worker --tail=50
+
+gcp-logs-nats:
+	@echo "NATS logs (infrastructure):"
+	@kubectl logs -n infrastructure -l app=nats --tail=50
+
+# ============================================================================
+# Local Testing with Shared Infrastructure (Plan A)
+# ============================================================================
+
+test-api-local:
+	@echo "Starting shared test infrastructure for API..."
+	@cd apps/api && docker compose -f docker-compose.test.yml up -d
+	@echo "Waiting for services to be ready..."
+	@sleep 5
+	@echo "✓ Test infrastructure running:"
+	@echo "  - PostgreSQL: localhost:5433 (user: test, password: test, db: test_db)"
+	@echo "  - NATS: localhost:4222 (client), localhost:8222 (monitoring)"
+	@echo ""
+	@echo "Run tests with:"
+	@echo "  cd apps/api && DATABASE_URL='postgresql+psycopg2://test:test@localhost:5433/test_db' NATS_URL='nats://localhost:4222' pytest"
+	@echo ""
+	@echo "Stop with:"
+	@echo "  cd apps/api && docker compose -f docker-compose.test.yml down"
+
+test-worker-local:
+	@echo "Starting shared test infrastructure for Worker..."
+	@cd apps/worker && docker compose -f docker-compose.test.yml up -d
+	@echo "Waiting for services to be ready..."
+	@sleep 5
+	@echo "✓ Test infrastructure running:"
+	@echo "  - PostgreSQL: localhost:5433 (user: test, password: test, db: test_db)"
+	@echo "  - NATS: localhost:4222 (client), localhost:8222 (monitoring)"
+	@echo ""
+	@echo "Run tests with:"
+	@echo "  cd apps/worker && DATABASE_URL='postgresql+psycopg2://test:test@localhost:5433/test_db' NATS_URL='nats://localhost:4222' pytest"
+	@echo ""
+	@echo "Stop with:"
+	@echo "  cd apps/worker && docker compose -f docker-compose.test.yml down"
+
+test-all-local:
+	@echo "Note: API and Worker share the same test infrastructure (test-db and test-nats)"
+	@echo "Starting from the API directory will make it available to both."
+	@$(MAKE) test-api-local

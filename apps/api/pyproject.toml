@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "overflying-api"
 version = "0.1.0"
-description = "FastAPI service for Constellation GPU orchestrator"
+description = "FastAPI service for Overflying GPU orchestrator"
 authors = ["Your Name <your.email@example.com>"]
 packages = [{include = "src"}]
 

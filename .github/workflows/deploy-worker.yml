@@ -1,19 +1,19 @@
-name: Deploy API
+name: Deploy Worker
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'apps/api/**'
-      - 'k8s/api/**'
-      - '.github/workflows/deploy-api.yml'
+      - 'apps/worker/**'
+      - 'k8s/worker/**'
+      - '.github/workflows/deploy-worker.yml'
       - '.github/workflows/reusable-*.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'apps/api/**'
-      - 'k8s/api/**'
-      - '.github/workflows/deploy-api.yml'
+      - 'apps/worker/**'
+      - 'k8s/worker/**'
+      - '.github/workflows/deploy-worker.yml'
 
 env:
   PROJECT_ID: overflying-cluster
@@ -21,27 +21,27 @@ env:
   GKE_CLUSTER: overflying-autopilot
   REGISTRY: europe-west1-docker.pkg.dev
   REPOSITORY: overflying-images
-  IMAGE_NAME: api
+  IMAGE_NAME: worker
 
 jobs:
-  test-api:
-    name: Test API
+  test-worker:
+    name: Test Worker
     uses: ./.github/workflows/reusable-test-python.yml
     with:
-      app_path: apps/api
+      app_path: apps/worker
       python_version: '3.11'
-      coverage_flags: api
+      coverage_flags: worker
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build-and-push:
     name: Build and Push
-    needs: test-api
+    needs: test-worker
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/reusable-build-push-python.yml
     with:
-      app_path: apps/api
-      image_name: api
+      app_path: apps/worker
+      image_name: worker
       project_id: overflying-cluster
       region: europe-west1
       registry: europe-west1-docker.pkg.dev
@@ -54,16 +54,16 @@ jobs:
     needs: build-and-push
     uses: ./.github/workflows/reusable-deploy-gke.yml
     with:
-      environment_name: api-staging
-      environment_url: https://staging.api.overfly.ing
-      deployment_name: api-staging
+      environment_name: worker-staging
+      environment_url: https://staging.worker.overfly.ing
+      deployment_name: worker-staging
       namespace: staging
-      container_name: api
+      container_name: worker
       image_tag: ${{ needs.build-and-push.outputs.image_tag }}
       project_id: overflying-cluster
       region: europe-west1
       cluster: overflying-autopilot
-      service_name: api-service
+      service_name: worker-service
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
@@ -72,15 +72,15 @@ jobs:
     needs: deploy-staging
     uses: ./.github/workflows/reusable-deploy-gke.yml
     with:
-      environment_name: api-production
-      environment_url: https://api.overfly.ing
-      deployment_name: api-production
+      environment_name: worker-production
+      environment_url: https://worker.overfly.ing
+      deployment_name: worker-production
       namespace: production
-      container_name: api
+      container_name: worker
       image_tag: ${{ needs.build-and-push.outputs.image_tag }}
       project_id: overflying-cluster
       region: europe-west1
       cluster: overflying-autopilot
-      service_name: api-service
+      service_name: worker-service
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}

@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-production
+  namespace: production
+  labels:
+    app: worker
+    environment: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: worker
+        environment: production
+    spec:
+      serviceAccountName: production-app-sa
+      containers:
+      - name: worker
+        image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/worker:latest
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: worker-secrets
+              key: DATABASE_URL
+        - name: NATS_URL
+          value: "nats://nats.infrastructure.svc.cluster.local:4222"
+        - name: GPU_SIMULATION
+          value: "false"
+        - name: POLL_INTERVAL
+          value: "5"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        # Worker doesn't have health endpoints, so we check process
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-service
+  namespace: production
+  labels:
+    app: worker
+    environment: production
+spec:
+  selector:
+    app: worker
+    environment: production
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

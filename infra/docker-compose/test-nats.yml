@@ -1,0 +1,17 @@
+services:
+  test-nats:
+    image: nats:2
+    container_name: ${COMPOSE_PROJECT_NAME:-app}-test-nats
+    ports:
+      - '${TEST_NATS_CLIENT_PORT:-4222}:4222'
+      - '${TEST_NATS_MONITOR_PORT:-8222}:8222'
+    command:
+      - '-js'      # Enable JetStream
+      - '-m'       # Enable monitoring
+      - '8222'     # Monitoring port
+      - '-D'       # Enable debug logging
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:8222/healthz']
+      interval: 5s
+      timeout: 5s
+      retries: 5

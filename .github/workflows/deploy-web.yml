@@ -15,6 +15,7 @@ on:
     workflows: ["Deploy API"]
     types:
       - completed
+  workflow_dispatch:  # Add this to enable manual triggers
 
 env:
   PROJECT_ID: overflying-web

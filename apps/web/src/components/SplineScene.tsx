@@ -1,11 +1,21 @@
 'use client'
 import dynamic from 'next/dynamic'
+import { useState, useEffect } from 'react'
 
 const Spline = dynamic(() => import('@splinetool/react-spline'), {
   ssr: false,
-  loading: () => <div style={{ height: '400px', background: '#000000' }}>Loading 3D scene...</div>,
 })
 
 export const SplineScene = ({ scene }: { scene: string }) => {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return <div style={{ height: '400px', background: '#000000' }}>Loading 3D scene...</div>
+  }
+
   return <Spline scene={scene} />
 }

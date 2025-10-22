@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true, // Required for static export
   },
+  compiler: {
+    emotion: true,
+  },
 }
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({

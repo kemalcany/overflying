@@ -114,7 +114,9 @@ jobs:
 
       - name: Install dependencies
         working-directory: apps/web
-        run: bun install --frozen-lockfile
+        run: |
+          bun install --frozen-lockfile
+          npm install @rollup/rollup-linux-x64-gnu --no-save
 
       - name: Build static export
         working-directory: apps/web

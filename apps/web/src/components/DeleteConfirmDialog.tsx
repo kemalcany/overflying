@@ -1,13 +1,13 @@
-'use client'
-import * as AlertDialog from '@radix-ui/react-alert-dialog'
-import styled from '@emotion/styled'
+'use client';
+import styled from '@emotion/styled';
+import * as AlertDialog from '@radix-ui/react-alert-dialog';
 
 interface DeleteConfirmDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => void
-  jobName: string
-  isDeleting?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  jobName: string;
+  isDeleting?: boolean;
 }
 
 const Overlay = styled(AlertDialog.Overlay)`
@@ -24,7 +24,7 @@ const Overlay = styled(AlertDialog.Overlay)`
       opacity: 1;
     }
   }
-`
+`;
 
 const Content = styled(AlertDialog.Content)`
   background: white;
@@ -53,34 +53,34 @@ const Content = styled(AlertDialog.Content)`
       transform: translate(-50%, -50%) scale(1);
     }
   }
-`
+`;
 
 const Title = styled(AlertDialog.Title)`
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
   color: #333;
-`
+`;
 
 const Description = styled(AlertDialog.Description)`
   font-size: 0.875rem;
   color: #666;
   margin: 0 0 1.5rem 0;
   line-height: 1.5;
-`
+`;
 
 const JobName = styled.span`
   font-weight: 600;
   color: #333;
-`
+`;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
-`
+`;
 
-const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
+const Button = styled.button<{variant?: 'danger' | 'secondary'}>`
   padding: 0.5rem 1rem;
   border-radius: 4px;
   font-size: 0.875rem;
@@ -89,7 +89,7 @@ const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
   border: none;
   transition: background 0.2s;
 
-  ${(p) =>
+  ${p =>
     p.variant === 'danger'
       ? `
     background: #f44336;
@@ -110,7 +110,7 @@ const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
     opacity: 0.5;
     cursor: not-allowed;
   }
-`
+`;
 
 export const DeleteConfirmDialog = ({
   open,
@@ -126,7 +126,8 @@ export const DeleteConfirmDialog = ({
         <Content>
           <Title>Delete Job?</Title>
           <Description>
-            Are you sure you want to delete <JobName>{jobName}</JobName>? This action cannot be undone.
+            Are you sure you want to delete <JobName>{jobName}</JobName>? This
+            action cannot be undone.
           </Description>
           <ButtonGroup>
             <AlertDialog.Cancel asChild>
@@ -135,7 +136,11 @@ export const DeleteConfirmDialog = ({
               </Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
-              <Button variant="danger" onClick={onConfirm} disabled={isDeleting}>
+              <Button
+                variant="danger"
+                onClick={onConfirm}
+                disabled={isDeleting}
+              >
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </Button>
             </AlertDialog.Action>
@@ -143,5 +148,5 @@ export const DeleteConfirmDialog = ({
         </Content>
       </AlertDialog.Portal>
     </AlertDialog.Root>
-  )
-}
+  );
+};

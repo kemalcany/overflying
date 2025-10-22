@@ -1,16 +1,16 @@
-'use client'
-import * as Dialog from '@radix-ui/react-dialog'
-import styled from '@emotion/styled'
-import { JobForm } from './JobForm'
-import type { JobFormData } from './JobForm'
+'use client';
+import styled from '@emotion/styled';
+import * as Dialog from '@radix-ui/react-dialog';
+import {JobForm} from './JobForm';
+import type {JobFormData} from './JobForm';
 
 interface JobDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (data: JobFormData) => void
-  defaultValues?: Partial<JobFormData>
-  title?: string
-  isSubmitting?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: JobFormData) => void;
+  defaultValues?: Partial<JobFormData>;
+  title?: string;
+  isSubmitting?: boolean;
 }
 
 const Overlay = styled(Dialog.Overlay)`
@@ -27,7 +27,7 @@ const Overlay = styled(Dialog.Overlay)`
       opacity: 1;
     }
   }
-`
+`;
 
 const Content = styled(Dialog.Content)`
   background: white;
@@ -57,14 +57,14 @@ const Content = styled(Dialog.Content)`
       transform: translate(-50%, -50%) scale(1);
     }
   }
-`
+`;
 
 const Title = styled(Dialog.Title)`
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 1rem 0;
   color: #333;
-`
+`;
 
 const CloseButton = styled(Dialog.Close)`
   position: absolute;
@@ -83,15 +83,22 @@ const CloseButton = styled(Dialog.Close)`
   &:hover {
     background: #f5f5f5;
   }
-`
+`;
 const Description = styled(Dialog.Description)`
   display: none;
-`
+`;
 
-export const JobDialog = ({ open, onOpenChange, onSubmit, defaultValues, title = 'Create Job', isSubmitting }: JobDialogProps) => {
+export const JobDialog = ({
+  open,
+  onOpenChange,
+  onSubmit,
+  defaultValues,
+  title = 'Create Job',
+  isSubmitting,
+}: JobDialogProps) => {
   const handleSubmit = (data: JobFormData) => {
-    onSubmit(data)
-  }
+    onSubmit(data);
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -110,9 +117,14 @@ export const JobDialog = ({ open, onOpenChange, onSubmit, defaultValues, title =
               />
             </svg>
           </CloseButton>
-          <JobForm defaultValues={defaultValues} onSubmit={handleSubmit} onCancel={() => onOpenChange(false)} isSubmitting={isSubmitting} />
+          <JobForm
+            defaultValues={defaultValues}
+            onSubmit={handleSubmit}
+            onCancel={() => onOpenChange(false)}
+            isSubmitting={isSubmitting}
+          />
         </Content>
       </Dialog.Portal>
     </Dialog.Root>
-  )
-}
+  );
+};

@@ -7,6 +7,7 @@ import {api, connectJobEvents} from '@/app/api';
 import {DeleteConfirmDialog} from '@/components/DeleteConfirmDialog';
 import {JobDialog} from '@/components/JobDialog';
 import type {JobFormData} from '@/components/JobForm';
+import {SplineScene} from '@/components/SplineScene';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -151,10 +152,19 @@ const HomePage = () => {
   const [sseConnected, setSseConnected] = useState(false);
   const [_lastEvent, setLastEvent] = useState<any>(null);
 
-  const {data: jobs, isLoading} = useQuery({
+  const {
+    data: jobs,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['jobs'],
     queryFn: api.getJobs,
+    enabled: false, // Disable automatic fetching
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   useEffect(() => {
     if (!sseConnected) {
@@ -262,9 +272,7 @@ const HomePage = () => {
         </div>
       </Header>
 
-      {/*
       <SplineScene scene="https://prod.spline.design/Tx1XLWOMrLaBfrR6/scene.splinecode" />
-      */}
 
       {jobs && jobs.length > 0 ? (
         <JobGrid>

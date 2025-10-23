@@ -1,4 +1,4 @@
-.PHONY: help dev up down logs clean api worker web venv
+.PHONY: help up down logs clean api worker web venv
 .PHONY: db-migrate db-upgrade db-downgrade db-shell db-query db-init
 .PHONY: db-local-shell db-local-query
 .PHONY: db-staging-init db-staging-migrate db-staging-upgrade db-staging-proxy
@@ -106,8 +106,6 @@ help:
 	@echo "  make gcp-logs-worker   - View Worker logs from GKE"
 	@echo "  make gcp-logs-nats     - View NATS logs from GKE"	
 
-dev: up
-
 up:
 	$(COMPOSE) up -d
 
@@ -126,13 +124,11 @@ clean:
 	@-pkill -9 -f "apps/api" 2>/dev/null || true
 	@-pkill -9 -f "bun.*next" 2>/dev/null || true
 	@-pkill -9 -f "node.*next" 2>/dev/null || true
-	@-pkill -9 -f "nats-server" 2>/dev/null || true
 	@-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 	@-lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-	@-lsof -ti:4222 | xargs kill -9 2>/dev/null || true
-	@-lsof -ti:8222 | xargs kill -9 2>/dev/null || true	
-	@echo "All services stopped."
+	@echo "✓ All services stopped (Docker daemon left running)"
+	@echo "  Run 'make down' to stop Docker containers"
 
 api:
 	@echo "Starting API with environment: $(ENV)"

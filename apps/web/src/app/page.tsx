@@ -272,7 +272,7 @@ const HomePage = () => {
         </div>
       </Header>
 
-      <SplineScene scene="https://prod.spline.design/Tx1XLWOMrLaBfrR6/scene.splinecode" />
+      <SplineScene scene="https://prod.spline.design/Al3ikp4PcdkGJyIJ/scene.splinecode" />
 
       {jobs && jobs.length > 0 ? (
         <JobGrid>

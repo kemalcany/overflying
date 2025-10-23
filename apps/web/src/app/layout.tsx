@@ -10,7 +10,13 @@ export const metadata = {
 
 const RootLayout = ({children}: {children: ReactNode}) => (
   <html lang="en">
-    <body style={{margin: 0, fontFamily: 'system-ui, sans-serif'}}>
+    <body
+      style={{
+        margin: 0,
+        fontFamily: 'system-ui, sans-serif',
+        background: '#000000',
+      }}
+    >
       <EmotionCacheProvider>
         <QueryProvider>{children}</QueryProvider>
         <Toaster position="top-right" richColors />

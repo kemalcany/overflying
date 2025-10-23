@@ -1,6 +1,6 @@
 """Database connection for worker"""
 
-from src.config import settings
+from config import settings
 from sqlalchemy import TIMESTAMP, Column, Integer, Text, create_engine
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base, sessionmaker

@@ -19,15 +19,13 @@ spec:
         app: worker
         environment: staging
     spec:
+      serviceAccountName: staging-app-sa
       containers:
       - name: worker
-        image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/worker:latest
+        image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/worker:latest  # Updated by CI/CD
         env:
         - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: worker-secrets
-              key: DATABASE_URL
+          value: "postgresql+psycopg2://staging_user:gizmo123@localhost:5432/staging"
         - name: NATS_URL
           value: "nats://nats.infrastructure.svc.cluster.local:4222"
         - name: GPU_SIMULATION
@@ -50,6 +48,21 @@ spec:
             - "import sys; sys.exit(0)"
           initialDelaySeconds: 30
           periodSeconds: 30
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.15.0
+        args:
+          - "--structured-logs"
+          - "--port=5432"
+          - "overflying-db:europe-west1:overflying-db"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
       restartPolicy: Always
 
 ---

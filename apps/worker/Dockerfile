@@ -66,5 +66,9 @@ RUN useradd -m -u 1000 worker && \
     chown -R worker:worker /app
 USER worker
 
-# Run the worker
-CMD ["python", "-m", "src.main"]
+# Set PYTHONPATH to include /app so modules can be imported
+ENV PYTHONPATH=/app/src
+
+# Run the worker from src directory
+WORKDIR /app/src
+CMD ["python", "main.py"]

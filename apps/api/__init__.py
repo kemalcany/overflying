@@ -1,3 +1,3 @@
 """
-Constellation API application package
+Overflying API application package
 """

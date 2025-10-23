@@ -2,18 +2,18 @@ name: Deploy API
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'apps/api/**'
-      - 'k8s/api/**'
-      - '.github/workflows/deploy-api.yml'
-      - '.github/workflows/reusable-*.yml'
+      - "apps/api/**"
+      - "k8s/api/**"
+      - ".github/workflows/deploy-api.yml"
+      - ".github/workflows/reusable-*.yml"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'apps/api/**'
-      - 'k8s/api/**'
-      - '.github/workflows/deploy-api.yml'
+      - "apps/api/**"
+      - "k8s/api/**"
+      - ".github/workflows/deploy-api.yml"
 
 env:
   PROJECT_ID: overflying-cluster
@@ -29,13 +29,13 @@ jobs:
     uses: ./.github/workflows/reusable-test-python.yml
     with:
       app_path: apps/api
-      python_version: '3.11'
+      python_version: "3.11"
       coverage_flags: api
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build-and-push:
-    name: Build and Push
+    name: Build and Push API Image
     needs: test-api
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/reusable-build-push-python.yml

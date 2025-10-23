@@ -2,18 +2,18 @@ name: Deploy Worker
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'apps/worker/**'
-      - 'k8s/worker/**'
-      - '.github/workflows/deploy-worker.yml'
-      - '.github/workflows/reusable-*.yml'
+      - "apps/worker/**"
+      - "k8s/worker/**"
+      - ".github/workflows/deploy-worker.yml"
+      - ".github/workflows/reusable-*.yml"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'apps/worker/**'
-      - 'k8s/worker/**'
-      - '.github/workflows/deploy-worker.yml'
+      - "apps/worker/**"
+      - "k8s/worker/**"
+      - ".github/workflows/deploy-worker.yml"
 
 env:
   PROJECT_ID: overflying-cluster
@@ -29,13 +29,13 @@ jobs:
     uses: ./.github/workflows/reusable-test-python.yml
     with:
       app_path: apps/worker
-      python_version: '3.11'
+      python_version: "3.11"
       coverage_flags: worker
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build-and-push:
-    name: Build and Push
+    name: Build and Push Worker Image
     needs: test-worker
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/reusable-build-push-python.yml

@@ -1,6 +1,6 @@
 # Worker Kubernetes Deployment
 
-This directory contains Kubernetes manifests for deploying the Constellation Worker service to GKE.
+This directory contains Kubernetes manifests for deploying the Overflying Worker service to GKE.
 
 ## Overview
 

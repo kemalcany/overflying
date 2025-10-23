@@ -1,3 +1,3 @@
 """
-Test package for Constellation API
+Test package for Overflying API
 """

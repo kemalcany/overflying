@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Constellation API
+  title: Overflying API
   description: GPU task orchestrator with real-time insights
   version: 0.1.0
 paths:
@@ -10,7 +10,7 @@ paths:
       description: Root endpoint - API info
       operationId: root__get
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
@@ -21,7 +21,7 @@ paths:
       description: Health check endpoint
       operationId: health_health_get
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
@@ -32,13 +32,13 @@ paths:
       description: Get all jobs from the database
       operationId: list_jobs_jobs_get
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/JobResponse'
+                  $ref: "#/components/schemas/JobResponse"
                 type: array
                 title: Response List Jobs Jobs Get
     post:
@@ -49,21 +49,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobCreate'
+              $ref: "#/components/schemas/JobCreate"
         required: true
       responses:
-        '201':
+        "201":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobResponse'
-        '422':
+                $ref: "#/components/schemas/JobResponse"
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
   /jobs/{job_id}:
     get:
       summary: Get Job
@@ -78,18 +78,18 @@ paths:
             format: uuid
             title: Job Id
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobResponse'
-        '422':
+                $ref: "#/components/schemas/JobResponse"
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
     put:
       summary: Update Job
       description: Update an existing job
@@ -107,20 +107,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobUpdate'
+              $ref: "#/components/schemas/JobUpdate"
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobResponse'
-        '422':
+                $ref: "#/components/schemas/JobResponse"
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
     delete:
       summary: Delete Job
       description: Delete a job
@@ -134,21 +134,21 @@ paths:
             format: uuid
             title: Job Id
       responses:
-        '204':
+        "204":
           description: Successful Response
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
 components:
   schemas:
     HTTPValidationError:
       properties:
         detail:
           items:
-            $ref: '#/components/schemas/ValidationError'
+            $ref: "#/components/schemas/ValidationError"
           type: array
           title: Detail
       type: object
@@ -173,7 +173,7 @@ components:
         submitted_by:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: "null"
           title: Submitted By
           description: Who submitted the job
       type: object
@@ -207,7 +207,7 @@ components:
         submitted_by:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: "null"
           title: Submitted By
       type: object
       required:
@@ -226,26 +226,26 @@ components:
           anyOf:
             - type: string
               minLength: 1
-            - type: 'null'
+            - type: "null"
           title: Name
           description: Job name
         params:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: 'null'
+            - type: "null"
           title: Params
           description: Job parameters as JSON
         priority:
           anyOf:
             - type: integer
-            - type: 'null'
+            - type: "null"
           title: Priority
           description: Job priority (higher = more important)
         submitted_by:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: "null"
           title: Submitted By
           description: Who submitted the job
       type: object
@@ -272,4 +272,3 @@ components:
         - msg
         - type
       title: ValidationError
-

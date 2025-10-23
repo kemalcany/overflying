@@ -58,14 +58,13 @@ spec:
 
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: nats
   namespace: infrastructure
   labels:
     app: nats
 spec:
-  serviceName: nats
   replicas: 1
   selector:
     matchLabels:
@@ -115,11 +114,5 @@ spec:
       - name: config-volume
         configMap:
           name: nats-config
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 1Gi
+      - name: data
+        emptyDir: {}

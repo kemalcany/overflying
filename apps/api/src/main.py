@@ -1,5 +1,5 @@
 """
-Constellation API - FastAPI service for GPU job orchestration
+Overflying API - FastAPI service for GPU job orchestration
 """
 
 import json
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Constellation API",
+    title="Overflying API",
     description="GPU task orchestrator with real-time insights",
     version="0.1.0",
     lifespan=lifespan,
@@ -65,7 +65,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     """Root endpoint - API info"""
-    return {"name": "Constellation API", "version": "0.1.0", "status": "running"}
+    return {"name": "Overflying API", "version": "0.1.0", "status": "running"}
 
 
 @app.get("/health")

@@ -4,11 +4,11 @@ import asyncio
 import time
 from datetime import datetime
 
-from config import settings
-from database import SessionLocal
-from executor import JobExecutor
-from gpu_manager import GPUManager
-from nats_client import NATSManager
+from src.config import settings
+from src.database import SessionLocal
+from src.executor import JobExecutor
+from src.gpu_manager import GPUManager
+from src.nats_client import NATSManager
 from sqlalchemy import text
 
 

@@ -1,5 +1,5 @@
 """
-Overflying API - FastAPI service for GPU job orchestration
+Overflying API - FastAPI service for GPU job orchestration and work scheduling
 """
 
 import json

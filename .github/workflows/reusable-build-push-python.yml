@@ -36,8 +36,8 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image_tag: ${{ steps.meta.outputs.tags }}
-      image_latest: ${{ steps.meta.outputs.latest }}
+      image_tag: ${{ steps.set-outputs.outputs.image_tag }}
+      image_latest: ${{ steps.set-outputs.outputs.image_latest }}
 
     steps:
       - name: Checkout code
@@ -70,6 +70,12 @@ jobs:
         run: |
           docker push ${{ steps.meta.outputs.tags }}
           docker push ${{ steps.meta.outputs.latest }}
+
+      - name: Set outputs
+        id: set-outputs
+        run: |
+          echo "image_tag=${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+          echo "image_latest=${{ steps.meta.outputs.latest }}" >> $GITHUB_OUTPUT
 
       - name: Build Success
         run: |

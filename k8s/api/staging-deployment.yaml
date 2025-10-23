@@ -21,16 +21,13 @@ spec:
       serviceAccountName: staging-app-sa
       containers:
       - name: api
-        image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/api:latest
+        image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/api:latest  # Updated by CI/CD
         ports:
         - containerPort: 8000
           name: http
         env:
         - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: database-url
+          value: "postgresql+psycopg2://staging_user:gizmo123@localhost:5432/staging"
         - name: CORS_ORIGINS
           valueFrom:
             secretKeyRef:
@@ -56,18 +53,33 @@ spec:
           httpGet:
             path: /health
             port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 5
         readinessProbe:
           httpGet:
             path: /health
             port: 8000
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
           failureThreshold: 3
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.15.0
+        args:
+          - "--structured-logs"
+          - "--port=5432"
+          - "overflying-db:europe-west1:overflying-db"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
 ---
 apiVersion: v1
 kind: Service

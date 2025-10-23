@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     # API Server
     host: str = "0.0.0.0"
     port: int = 8000
+    cors_origins: str = "http://localhost:3000"
 
     # NATS JetStream
     nats_url: str = "nats://localhost:4222"

@@ -3,7 +3,6 @@ Overflying API - FastAPI service for GPU job orchestration
 """
 
 import json
-import os
 from contextlib import asynccontextmanager
 from uuid import UUID
 
@@ -51,13 +50,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-print(f"[API] CORS origins configured: {CORS_ORIGINS}")  # Debug line
-
+# Parse CORS origins from settings
+cors_origins = settings.cors_origins.split(",")
+print(f"[API] CORS origins configured: {cors_origins}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

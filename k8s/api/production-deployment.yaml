@@ -35,7 +35,12 @@ spec:
           valueFrom:
             secretKeyRef:
               name: api-secrets
-              key: cors-origins              
+              key: cors-origins
+        - name: NATS_URL
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: nats-url
         - name: HOST
           value: "0.0.0.0"
         - name: PORT

@@ -49,7 +49,6 @@ venv.bak/
 *.swo
 *~
 .DS_Store
-.claude/
 
 # Jupyter Notebook
 # ================

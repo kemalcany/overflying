@@ -1,0 +1,93 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: observability
+  annotations:
+    # Use cert-manager to provision SSL certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+    # Authentication - IMPORTANT: Protect Grafana with basic auth or OAuth
+    # For now using basic auth, but consider OAuth/OIDC for production
+    # nginx.ingress.kubernetes.io/auth-type: basic
+    # nginx.ingress.kubernetes.io/auth-secret: grafana-basic-auth
+    # nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Grafana'
+
+    # Larger body size for dashboard imports
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # Connection timeout settings (Grafana queries can take time)
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+
+spec:
+  ingressClassName: nginx
+
+  # TLS configuration
+  tls:
+  - hosts:
+    - grafana.overfly.ing
+    secretName: grafana-tls  # cert-manager will create this secret
+
+  # Routing rules
+  rules:
+  - host: grafana.overfly.ing
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: observability
+  annotations:
+    # Use cert-manager to provision SSL certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+    # Authentication - IMPORTANT: Protect Prometheus with basic auth
+    # Prometheus has no built-in auth, so use ingress auth
+    # nginx.ingress.kubernetes.io/auth-type: basic
+    # nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
+    # nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Prometheus'
+
+    # Connection timeout settings
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+
+spec:
+  ingressClassName: nginx
+
+  # TLS configuration
+  tls:
+  - hosts:
+    - prometheus.overfly.ing
+    secretName: prometheus-tls  # cert-manager will create this secret
+
+  # Routing rules
+  rules:
+  - host: prometheus.overfly.ing
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090

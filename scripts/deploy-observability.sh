@@ -91,8 +91,12 @@ kubectl wait --for=condition=ready pod -l app=grafana -n observability --timeout
     log_warn "Grafana pod not ready after 180s, continuing anyway..."
 }
 
-# Step 4: Verify deployment
-log_info "Step 4/5: Verifying deployment..."
+# Step 4: Deploy Ingress
+log_info "Step 4/6: Deploying Ingress for Grafana and Prometheus..."
+kubectl apply -f "$K8S_DIR/observability/observability-ingress.yaml"
+
+# Step 5: Verify deployment
+log_info "Step 5/6: Verifying deployment..."
 echo ""
 
 log_info "Pods in observability namespace:"
@@ -102,48 +106,25 @@ echo ""
 log_info "Services in observability namespace:"
 kubectl get svc -n observability
 
-# Step 5: Display access information
-log_info "Step 5/5: Displaying access information..."
+# Step 6: Display access information
+log_info "Step 6/6: Displaying access information..."
 echo ""
 echo "=========================================="
 log_info "Observability Stack Deployed Successfully!"
 echo "=========================================="
 echo ""
 
-# Prometheus info
-PROMETHEUS_SVC=$(kubectl get svc -n observability prometheus -o jsonpath='{.spec.clusterIP}')
-log_info "Prometheus:"
-echo "  - Cluster IP: $PROMETHEUS_SVC:9090"
-echo "  - Access via port-forward: kubectl port-forward -n observability svc/prometheus 9090:9090"
-echo "  - Then visit: http://localhost:9090"
-echo ""
-
-# Grafana info
-GRAFANA_TYPE=$(kubectl get svc -n observability grafana -o jsonpath='{.spec.type}')
+# Access info
 log_info "Grafana:"
-if [ "$GRAFANA_TYPE" == "LoadBalancer" ]; then
-    log_info "  - Type: LoadBalancer (external access enabled)"
-    echo "  - Checking for external IP..."
+echo "  - Production URL: https://grafana.overfly.ing (via NGINX Ingress)"
+echo "  - Local access: kubectl port-forward -n observability svc/grafana 3000:3000"
+echo "  - Then visit: http://localhost:3000"
 
-    # Wait up to 60 seconds for LoadBalancer IP
-    for i in {1..12}; do
-        GRAFANA_IP=$(kubectl get svc -n observability grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-        if [ -n "$GRAFANA_IP" ]; then
-            break
-        fi
-        echo "    Waiting for LoadBalancer IP... ($i/12)"
-        sleep 5
-    done
-
-    if [ -n "$GRAFANA_IP" ]; then
-        log_info "  - External URL: http://$GRAFANA_IP:3000"
-    else
-        log_warn "  - LoadBalancer IP not yet assigned. Check with: kubectl get svc -n observability grafana"
-    fi
-else
-    echo "  - Access via port-forward: kubectl port-forward -n observability svc/grafana 3000:3000"
-    echo "  - Then visit: http://localhost:3000"
-fi
+echo ""
+log_info "Prometheus:"
+echo "  - Production URL: https://prometheus.overfly.ing (via NGINX Ingress)"
+echo "  - Local access: kubectl port-forward -n observability svc/prometheus 9090:9090"
+echo "  - Then visit: http://localhost:9090"
 
 echo ""
 log_info "Grafana Credentials:"
@@ -155,15 +136,26 @@ log_warn "  ⚠️  Change the default password immediately in production!"
 echo ""
 
 # Verification steps
+echo ""
 log_info "Next Steps:"
-echo "  1. Verify Prometheus targets:"
-echo "     kubectl port-forward -n observability svc/prometheus 9090:9090"
-echo "     Visit http://localhost:9090/targets"
 echo ""
-echo "  2. Access Grafana dashboards:"
-echo "     Navigate to Dashboards → Browse → Overflying folder"
+echo "  1. Configure DNS records (point to your NGINX Ingress IP):"
+echo "     grafana.overfly.ing → <NGINX_INGRESS_IP>"
+echo "     prometheus.overfly.ing → <NGINX_INGRESS_IP>"
+echo "     (Get NGINX IP: kubectl get svc -n ingress-nginx ingress-nginx-controller)"
 echo ""
-echo "  3. Deploy instrumented services:"
+echo "  2. Wait for SSL certificates to be issued (~2-5 minutes):"
+echo "     kubectl get certificate -n observability"
+echo ""
+echo "  3. Set up authentication (IMPORTANT - currently unprotected!):"
+echo "     Edit k8s/observability/observability-ingress.yaml"
+echo "     Uncomment the auth annotations to enable basic auth"
+echo ""
+echo "  4. Access your dashboards:"
+echo "     Grafana: https://grafana.overfly.ing"
+echo "     Prometheus: https://prometheus.overfly.ing"
+echo ""
+echo "  5. Deploy instrumented services:"
 echo "     kubectl apply -f $K8S_DIR/api/production-deployment.yaml"
 echo "     kubectl apply -f $K8S_DIR/worker/production-deployment.yaml"
 echo ""

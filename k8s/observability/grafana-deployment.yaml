@@ -144,7 +144,7 @@ metadata:
     app: grafana
     component: monitoring
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - name: http
       port: 3000

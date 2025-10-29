@@ -1,19 +1,45 @@
 {
   "permissions": {
     "allow": [
-      "Bash(psql:*)",
-      "Bash(make:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(curl:*)",
-      "Bash(python3:*)",
-      "Bash(npm run build:*)",
-      "Bash(bun run:*)",
-      "Bash(npm install:*)",
-      "Bash(cat:*)"
     ],
-    "deny": [],
+    "deny": [
+      "Read(*.csv)",
+      "Read(*.log)",
+      "Read(*.pyc)",
+      "Read(backend/.env)",
+      "Read(scripts/.env)",
+      "Read(service-account-key.json)",
+      "Read(.github/)",
+      "Read(.idea/)",
+      "Read(.next/)",
+      "Read(.serverless)",
+      "Read(.terraform.lock.hcl)",
+      "Read(.terraform/)",
+      "Read(.vscode/)",
+      "Read(__pycache__/)",
+      "Read(build/)",
+      "Read(data/)",
+      "Read(dist/)",
+      "Read(apps/web/dist/)",
+      "Read(node_modules/)",
+      "Read(apps/web/node_modules/)",
+      "Read(venv/)",
+      "Read(yarn.lock)",
+      "Read(backend/.env)"
+    ],
     "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/validate-bash.sh"
+          }
+        ]
+      }
+    ]
   }
 }

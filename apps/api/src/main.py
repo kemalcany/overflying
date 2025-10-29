@@ -12,7 +12,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from .config import settings
-from .database import get_db
+from .database import engine, get_db
+from .metrics import metrics_manager
 from .models import Job
 from .nats_client import NATSManager
 from .schemas import JobCreate, JobResponse, JobUpdate
@@ -24,14 +25,23 @@ nats_manager = NATSManager(settings.nats_url)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan event handler"""
+    # Startup: Initialize metrics
+    try:
+        metrics_manager.setup_metrics(app, engine)
+        print("[API] Metrics initialized")
+    except Exception as e:
+        print(f"[API] WARNING: Could not initialize metrics: {e}")
+
     # Startup: Connect to NATS (non-blocking, allows API to start without NATS)
     try:
         await nats_manager.connect()
         await nats_manager.ensure_stream("JOBS", ["jobs.>"])
         print("[API] Connected to NATS JetStream")
+        metrics_manager.set_nats_connection_status(True)
     except Exception as e:
         print(f"[API] WARNING: Could not connect to NATS: {e}")
         print("[API] API will run without real-time updates. Start NATS to enable SSE.")
+        metrics_manager.set_nats_connection_status(False)
 
     yield
 
@@ -39,6 +49,7 @@ async def lifespan(app: FastAPI):
     try:
         await nats_manager.disconnect()
         print("[API] Disconnected from NATS")
+        metrics_manager.set_nats_connection_status(False)
     except:
         pass
 
@@ -61,6 +72,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add metrics middleware
+app.middleware("http")(metrics_manager.create_timing_middleware())
 
 
 @app.get("/")
@@ -94,6 +108,13 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     db.add(job)
     db.commit()
     db.refresh(job)
+
+    # Record metrics
+    metrics_manager.record_job_created(
+        priority=job_data.priority,
+        submitted_by=job_data.submitted_by,
+    )
+
     return job
 
 
@@ -175,6 +196,9 @@ async def job_events_stream(request: Request):
             # Send initial connection event
             yield f"data: {json.dumps({'type': 'connected', 'message': 'SSE stream established'})}\n\n"
 
+            # Track SSE connection
+            metrics_manager.increment_sse_connections()
+
             # Stream events to client
             while True:
                 # Check if client disconnected
@@ -201,6 +225,9 @@ async def job_events_stream(request: Request):
             print(f"[SSE] Error in event stream: {e}")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
         finally:
+            # Track SSE disconnection
+            metrics_manager.decrement_sse_connections()
+
             # Cleanup: Delete the consumer
             try:
                 await nats_manager.js.delete_consumer("JOBS", consumer_name)

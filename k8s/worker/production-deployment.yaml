@@ -18,11 +18,20 @@ spec:
       labels:
         app: worker
         environment: production
+        app.kubernetes.io/name: overflying-worker
+        app.kubernetes.io/component: worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: production-app-sa
       containers:
       - name: worker
         image: europe-west1-docker.pkg.dev/overflying-cluster/overflying-images/worker:latest  # Updated by CI/CD
+        ports:
+        - containerPort: 8000
+          name: metrics
         env:
         - name: DATABASE_URL
           value: "postgresql+psycopg2://production_user:taekwando123@localhost:5432/production"
@@ -80,6 +89,7 @@ spec:
     environment: production
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8080
+      port: 8000
+      targetPort: 8000
+      name: metrics
   type: ClusterIP

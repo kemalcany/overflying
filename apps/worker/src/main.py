@@ -5,9 +5,10 @@ import time
 from datetime import datetime
 
 from src.config import settings
-from src.database import SessionLocal
+from src.database import SessionLocal, engine
 from src.executor import JobExecutor
 from src.gpu_manager import GPUManager
+from src.metrics import worker_metrics_manager
 from src.nats_client import NATSManager
 from sqlalchemy import text
 
@@ -18,6 +19,7 @@ class Worker:
         self.executor = JobExecutor()
         self.db = SessionLocal()
         self.nats = NATSManager(settings.nats_url)
+        self.metrics = worker_metrics_manager
         print(f"Worker started with {len(self.gpu_manager.gpus)} GPUs")
 
     async def publish_job_event(self, job_id: str, state: str, metadata: dict = None):
@@ -31,6 +33,9 @@ class Worker:
 
         subject = f"jobs.{job_id}.{state}"
         await self.nats.publish(subject, event_data)
+
+        # Record metrics
+        self.metrics.record_nats_event(event_type=state, subject=subject)
 
     def poll_jobs(self):
         """Poll for jobs using SKIP LOCKED pattern"""
@@ -54,6 +59,9 @@ class Worker:
     async def process_job(self, job_row):
         """Process a single job"""
         job_id, job_name, params = job_row
+
+        # Record job started
+        self.metrics.record_job_started()
 
         # Publish job started event
         await self.publish_job_event(job_id, "running", {"name": job_name})
@@ -94,16 +102,43 @@ class Worker:
                 },
             )
 
+            # Record metrics
+            if result["success"]:
+                self.metrics.record_job_processed(
+                    job_id=str(job_id),
+                    job_name=job_name,
+                    execution_time=result.get("execution_time", 0),
+                )
+            else:
+                self.metrics.record_job_failed(
+                    job_id=str(job_id),
+                    job_name=job_name,
+                )
+
         except Exception as e:
             # Publish failure event
             await self.publish_job_event(job_id, "failed", {"error": str(e)})
+
+            # Record failure metric
+            self.metrics.record_job_failed(
+                job_id=str(job_id),
+                job_name=job_name,
+                error=str(e),
+            )
             raise
         finally:
             self.gpu_manager.release_gpu(gpu.id)
+            self.metrics.record_job_finished()
 
     async def run(self):
         """Main worker loop"""
         print("Worker running, polling every", settings.poll_interval, "seconds...")
+
+        # Initialize metrics
+        self.metrics.setup_metrics(engine)
+
+        # Start metrics HTTP server
+        await self.metrics.start_metrics_server()
 
         # Connect to NATS and ensure stream exists
         await self.nats.connect()
@@ -117,6 +152,10 @@ class Worker:
 
                     # Poll for job
                     job = self.poll_jobs()
+
+                    # Record poll cycle
+                    self.metrics.record_poll_cycle(jobs_found=(job is not None))
+
                     if job:
                         await self.process_job(job)
                     else:
@@ -130,6 +169,7 @@ class Worker:
                     await asyncio.sleep(settings.poll_interval)
         finally:
             await self.nats.disconnect()
+            await self.metrics.stop_metrics_server()
             self.db.close()
 
 

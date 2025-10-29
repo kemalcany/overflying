@@ -17,6 +17,12 @@ spec:
       labels:
         app: api
         environment: production
+        app.kubernetes.io/name: overflying-api
+        app.kubernetes.io/component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: production-app-sa
       containers:

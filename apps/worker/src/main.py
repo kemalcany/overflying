@@ -1,16 +1,16 @@
 """Worker main loop"""
 
 import asyncio
-import time
-from datetime import datetime
+from datetime import UTC, datetime
 
-from src.config import settings
-from src.database import SessionLocal, engine
-from src.executor import JobExecutor
-from src.gpu_manager import GPUManager
-from src.metrics import worker_metrics_manager
-from src.nats_client import NATSManager
 from sqlalchemy import text
+
+from .config import settings
+from .database import SessionLocal, engine
+from .executor import JobExecutor
+from .gpu_manager import GPUManager
+from .metrics import worker_metrics_manager
+from .nats_client import NATSManager
 
 
 class Worker:
@@ -27,7 +27,7 @@ class Worker:
         event_data = {
             "job_id": str(job_id),
             "state": state,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             **(metadata or {}),
         }
 
@@ -75,7 +75,9 @@ class Worker:
                 {"id": job_id},
             )
             self.db.commit()
-            await self.publish_job_event(job_id, "queued", {"reason": "no_gpu_available"})
+            await self.publish_job_event(
+                job_id, "queued", {"reason": "no_gpu_available"}
+            )
             return
 
         # Allocate GPU and execute
@@ -98,7 +100,7 @@ class Worker:
                 {
                     "name": job_name,
                     "gpu_id": gpu.id,
-                    "execution_time": result.get("execution_time", 0),
+                    "execution_time": result.get("duration_seconds", 0),
                 },
             )
 
@@ -107,7 +109,7 @@ class Worker:
                 self.metrics.record_job_processed(
                     job_id=str(job_id),
                     job_name=job_name,
-                    execution_time=result.get("execution_time", 0),
+                    execution_time=result.get("duration_seconds", 0),
                 )
             else:
                 self.metrics.record_job_failed(
@@ -146,33 +148,42 @@ class Worker:
 
         try:
             while True:
-                try:
-                    # Update GPU metrics
-                    self.gpu_manager.update_metrics()
+                # Update GPU metrics
+                self.gpu_manager.update_metrics()
 
-                    # Poll for job
-                    job = self.poll_jobs()
+                # Poll for job
+                job = self.poll_jobs()
 
-                    # Record poll cycle
-                    self.metrics.record_poll_cycle(jobs_found=(job is not None))
+                # Record poll cycle
+                self.metrics.record_poll_cycle(jobs_found=(job is not None))
 
-                    if job:
-                        await self.process_job(job)
-                    else:
-                        await asyncio.sleep(settings.poll_interval)
-
-                except KeyboardInterrupt:
-                    print("\nShutting down worker...")
-                    break
-                except Exception as e:
-                    print(f"Error: {e}")
+                if job:
+                    await self.process_job(job)
+                else:
                     await asyncio.sleep(settings.poll_interval)
+
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            print("\nShutting down worker...")
+        except Exception as e:
+            print(f"Error: {e}")
         finally:
             await self.nats.disconnect()
             await self.metrics.stop_metrics_server()
             self.db.close()
 
 
-if __name__ == "__main__":
+# Entry point for module execution
+async def main():
+    """Main entry point with proper signal handling"""
     worker = Worker()
-    asyncio.run(worker.run())
+    try:
+        await worker.run()
+    except KeyboardInterrupt:
+        pass  # Graceful shutdown already handled in worker.run()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Worker stopped")

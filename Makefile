@@ -138,7 +138,7 @@ api:
 worker:
 	@echo "Starting Worker with environment: $(ENV)"
 	$(call load_env,worker); \
-	cd apps/worker && python3 src/main.py
+	cd apps/worker && poetry run python3 -m src.main
 
 globe:
 	@echo "Starting Globe with environment: $(ENV)"

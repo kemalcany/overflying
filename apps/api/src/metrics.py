@@ -9,7 +9,7 @@ This module sets up OpenTelemetry with Prometheus exporter following best practi
 """
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import FastAPI, Request, Response
 from opentelemetry import metrics
@@ -59,12 +59,14 @@ class MetricsManager:
         prometheus_reader = PrometheusMetricReader()
 
         # Create resource with service information
-        resource = Resource(attributes={
-            SERVICE_NAME: self.service_name,
-            "service.version": "0.1.0",
-            "service.namespace": "overflying",
-            "deployment.environment": "production",  # Should come from config
-        })
+        resource = Resource(
+            attributes={
+                SERVICE_NAME: self.service_name,
+                "service.version": "0.1.0",
+                "service.namespace": "overflying",
+                "deployment.environment": "production",  # Should come from config
+            }
+        )
 
         # Create MeterProvider with Prometheus reader
         self.meter_provider = MeterProvider(
@@ -248,6 +250,7 @@ class MetricsManager:
         Returns:
             FastAPI middleware function
         """
+
         async def metrics_middleware(request: Request, call_next):
             start_time = time.time()
 

@@ -8,9 +8,6 @@ This module sets up OpenTelemetry with Prometheus exporter following best practi
 - Lightweight HTTP server for /metrics endpoint (Prometheus scraping)
 """
 
-import asyncio
-from threading import Thread
-
 from aiohttp import web
 from opentelemetry import metrics
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
@@ -34,7 +31,9 @@ class WorkerMetricsManager:
     - Custom metrics: overflying.worker.* namespace
     """
 
-    def __init__(self, service_name: str = "overflying-worker", metrics_port: int = 8000):
+    def __init__(
+        self, service_name: str = "overflying-worker", metrics_port: int = 8010
+    ):
         self.service_name = service_name
         self.metrics_port = metrics_port
         self.meter_provider = None
@@ -64,12 +63,14 @@ class WorkerMetricsManager:
         prometheus_reader = PrometheusMetricReader()
 
         # Create resource with service information
-        resource = Resource(attributes={
-            SERVICE_NAME: self.service_name,
-            "service.version": "0.1.0",
-            "service.namespace": "overflying",
-            "deployment.environment": "production",  # Should come from config
-        })
+        resource = Resource(
+            attributes={
+                SERVICE_NAME: self.service_name,
+                "service.version": "0.1.0",
+                "service.namespace": "overflying",
+                "deployment.environment": "production",  # Should come from config
+            }
+        )
 
         # Create MeterProvider with Prometheus reader
         self.meter_provider = MeterProvider(
@@ -177,17 +178,19 @@ class WorkerMetricsManager:
     async def start_metrics_server(self):
         """Start a lightweight HTTP server for /metrics endpoint."""
         self.app = web.Application()
-        self.app.router.add_get('/metrics', self._metrics_handler)
-        self.app.router.add_get('/health', self._health_handler)
+        self.app.router.add_get("/metrics", self._metrics_handler)
+        self.app.router.add_get("/health", self._health_handler)
 
         self.runner = web.AppRunner(self.app)
         await self.runner.setup()
 
-        site = web.TCPSite(self.runner, '0.0.0.0', self.metrics_port)
+        site = web.TCPSite(self.runner, "0.0.0.0", self.metrics_port)
         await site.start()
 
         print(f"[Metrics] HTTP server started on port {self.metrics_port}")
-        print(f"[Metrics] Prometheus endpoint available at http://0.0.0.0:{self.metrics_port}/metrics")
+        print(
+            f"[Metrics] Prometheus endpoint available at http://0.0.0.0:{self.metrics_port}/metrics"
+        )
 
     async def stop_metrics_server(self):
         """Stop the metrics HTTP server."""
@@ -200,7 +203,7 @@ class WorkerMetricsManager:
         metrics_data = generate_latest(REGISTRY)
         return web.Response(
             body=metrics_data,
-            content_type='text/plain; version=0.0.4; charset=utf-8',
+            content_type="text/plain; version=0.0.4; charset=utf-8",
         )
 
     async def _health_handler(self, request):
@@ -271,7 +274,9 @@ class WorkerMetricsManager:
             },
         )
 
-    def update_gpu_metrics(self, gpu_id: str, utilization: float, memory_used: int, temperature: float):
+    def update_gpu_metrics(
+        self, gpu_id: str, utilization: float, memory_used: int, temperature: float
+    ):
         """
         Update GPU metrics.
 

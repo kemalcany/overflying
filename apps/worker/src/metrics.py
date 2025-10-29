@@ -82,8 +82,8 @@ class WorkerMetricsManager:
 
         # Get a meter for custom metrics
         self.meter = metrics.get_meter(
-            instrumenting_module_name="overflying.worker",
-            instrumenting_library_version="0.1.0",
+            name="overflying.worker",
+            version="0.1.0",
         )
 
         # Setup automatic instrumentation
@@ -209,6 +209,9 @@ class WorkerMetricsManager:
 
     def record_job_processed(self, job_id: str, job_name: str, execution_time: float):
         """Record a successfully processed job."""
+        if not self.jobs_processed_counter or not self.job_execution_time_histogram:
+            return
+
         self.jobs_processed_counter.add(
             1,
             attributes={
@@ -224,6 +227,9 @@ class WorkerMetricsManager:
 
     def record_job_failed(self, job_id: str, job_name: str, error: str = None):
         """Record a failed job."""
+        if not self.jobs_failed_counter:
+            return
+
         attributes = {"job_name": job_name}
         if error:
             attributes["error_type"] = error[:50]  # Limit error string length
@@ -232,14 +238,19 @@ class WorkerMetricsManager:
 
     def record_job_started(self):
         """Record a job starting."""
-        self.jobs_in_progress_gauge.add(1)
+        if self.jobs_in_progress_gauge:
+            self.jobs_in_progress_gauge.add(1)
 
     def record_job_finished(self):
         """Record a job finishing."""
-        self.jobs_in_progress_gauge.add(-1)
+        if self.jobs_in_progress_gauge:
+            self.jobs_in_progress_gauge.add(-1)
 
     def record_poll_cycle(self, jobs_found: bool):
         """Record a poll cycle."""
+        if not self.poll_cycles_counter:
+            return
+
         self.poll_cycles_counter.add(
             1,
             attributes={
@@ -249,6 +260,9 @@ class WorkerMetricsManager:
 
     def record_nats_event(self, event_type: str, subject: str):
         """Record a NATS event publication."""
+        if not self.nats_events_counter:
+            return
+
         self.nats_events_counter.add(
             1,
             attributes={

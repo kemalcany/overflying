@@ -77,8 +77,8 @@ class MetricsManager:
 
         # Get a meter for custom metrics
         self.meter = metrics.get_meter(
-            instrumenting_module_name="overflying.api",
-            instrumenting_library_version="0.1.0",
+            name="overflying.api",
+            version="0.1.0",
         )
 
         # Setup automatic instrumentation
@@ -181,6 +181,9 @@ class MetricsManager:
 
     def record_job_created(self, priority: int = None, submitted_by: str = None):
         """Record a job creation event."""
+        if not self.jobs_created_counter:
+            return
+
         attributes = {}
         if priority is not None:
             attributes["priority"] = str(priority)
@@ -191,6 +194,9 @@ class MetricsManager:
 
     def record_nats_event(self, event_type: str, subject: str):
         """Record a NATS event publication."""
+        if not self.nats_events_counter:
+            return
+
         self.nats_events_counter.add(
             1,
             attributes={
@@ -207,11 +213,13 @@ class MetricsManager:
 
     def increment_sse_connections(self):
         """Increment active SSE connections."""
-        self.sse_connections_gauge.add(1)
+        if self.sse_connections_gauge:
+            self.sse_connections_gauge.add(1)
 
     def decrement_sse_connections(self):
         """Decrement active SSE connections."""
-        self.sse_connections_gauge.add(-1)
+        if self.sse_connections_gauge:
+            self.sse_connections_gauge.add(-1)
 
     def record_request_duration(
         self,
@@ -221,6 +229,9 @@ class MetricsManager:
         duration: float,
     ):
         """Record HTTP request duration."""
+        if not self.request_duration_histogram:
+            return
+
         self.request_duration_histogram.record(
             duration,
             attributes={

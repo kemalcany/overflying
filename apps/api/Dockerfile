@@ -22,7 +22,15 @@ RUN pip install --no-cache-dir --upgrade pip && \
     psycopg2-binary>=2.9.0 \
     pydantic>=2.0.0 \
     pydantic-settings>=2.0.0 \
-    nats-py>=2.9.0
+    nats-py>=2.9.0 \
+    opentelemetry-api>=1.27.0 \
+    opentelemetry-sdk>=1.27.0 \
+    opentelemetry-instrumentation>=0.48b0 \
+    opentelemetry-instrumentation-fastapi>=0.48b0 \
+    opentelemetry-instrumentation-sqlalchemy>=0.48b0 \
+    opentelemetry-instrumentation-system-metrics>=0.48b0 \
+    opentelemetry-exporter-prometheus>=0.48b0 \
+    prometheus-client>=0.20.0
 
 # Runtime stage
 FROM python:3.11-slim AS production

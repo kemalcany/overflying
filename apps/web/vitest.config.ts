@@ -1,16 +1,15 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import {dirname, resolve} from 'path';
+import {fileURLToPath} from 'url';
+import react from '@vitejs/plugin-react';
+import {defineConfig} from 'vitest/config';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    environment: 'happy-dom', // Changed from 'jsdom'
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     exclude: [
@@ -24,7 +23,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json'],
-      exclude: ['node_modules/', 'vitest.setup.ts', '**/*.config.ts', '**/*.test.{ts,tsx}', '**/__tests__/**'],
+      exclude: [
+        'node_modules/',
+        'vitest.setup.ts',
+        '**/*.config.ts',
+        '**/*.test.{ts,tsx}',
+        '**/__tests__/**',
+      ],
     },
   },
   resolve: {
@@ -32,4 +37,4 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
-})
+});

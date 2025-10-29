@@ -133,7 +133,7 @@ clean:
 api:
 	@echo "Starting API with environment: $(ENV)"
 	$(call load_env,api); \
-	cd apps/api && python3 -m src.run
+	cd apps/api && poetry run python3 -m src.run
 
 worker:
 	@echo "Starting Worker with environment: $(ENV)"

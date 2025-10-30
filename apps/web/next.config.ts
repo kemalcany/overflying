@@ -1,4 +1,4 @@
-import type { NextConfig } from 'next'
+import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   output: 'export', // Add this for static export
@@ -8,10 +8,10 @@ const nextConfig: NextConfig = {
   compiler: {
     emotion: true,
   },
-}
+};
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
-})
+});
 
-export default withBundleAnalyzer(nextConfig)
+export default withBundleAnalyzer(nextConfig);

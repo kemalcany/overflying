@@ -50,8 +50,8 @@ async def lifespan(app: FastAPI):
         await nats_manager.disconnect()
         print("[API] Disconnected from NATS")
         metrics_manager.set_nats_connection_status(False)
-    except:
-        pass
+    except Exception as e:
+        print(f"[API] Failed to disconnect from NATS: {e}")
 
 
 app = FastAPI(
@@ -163,7 +163,7 @@ async def purge_stream(stream_name: str = "JOBS"):
         await nats_manager.purge_stream(stream_name)
         return {"message": f"Stream {stream_name} purged"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/events")
@@ -232,8 +232,8 @@ async def job_events_stream(request: Request):
             try:
                 await nats_manager.js.delete_consumer("JOBS", consumer_name)
                 print(f"[SSE] Cleaned up consumer: {consumer_name}")
-            except:
-                pass
+            except Exception as e:
+                print(f"[SSE] Failed to cleanup consumer {consumer_name}: {e}")
 
     return StreamingResponse(
         event_generator(),

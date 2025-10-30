@@ -3,11 +3,11 @@ import styled from '@emotion/styled';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useEffect, useState} from 'react';
 import {toast} from 'sonner';
-import {api, connectJobEvents} from '@/app/api';
 import {DeleteConfirmDialog} from '@/components/DeleteConfirmDialog';
 import {JobDialog} from '@/components/JobDialog';
 import type {JobFormData} from '@/components/JobForm';
 import {SplineScene} from '@/components/SplineScene';
+import {api, connectJobEvents} from '@/lib/api';
 
 const Container = styled.div`
   max-width: 1200px;

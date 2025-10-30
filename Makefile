@@ -140,10 +140,7 @@ worker:
 	$(call load_env,worker); \
 	cd apps/worker && poetry run python3 -m src.main
 
-globe:
-	@echo "Starting Globe with environment: $(ENV)"
-	$(call load_env,globe); \
-	cd apps/globe && npm run dev
+
 
 web:
 	@cd apps/web && bun run dev

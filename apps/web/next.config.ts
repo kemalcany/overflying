@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   compiler: {
     emotion: true,
   },
+  experimental: {
+    mcpServer: true,
+  },
 };
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({

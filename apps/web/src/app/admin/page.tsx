@@ -1,7 +1,8 @@
 'use client';
 import styled from '@emotion/styled';
 import {useMutation} from '@tanstack/react-query';
-import {useState} from 'react';
+
+import {type ChangeEvent, useState} from 'react';
 import {toast} from 'sonner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
@@ -80,6 +81,10 @@ const BackLink = styled.a`
   }
 `;
 
+interface PurgeResponse {
+  message?: string;
+}
+
 const AdminPage = () => {
   const [streamName, setStreamName] = useState('JOBS');
 
@@ -94,19 +99,23 @@ const AdminPage = () => {
       );
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as {detail?: string};
         throw new Error(error.detail || 'Failed to purge stream');
       }
 
-      return response.json();
+      return response.json() as Promise<PurgeResponse>;
     },
-    onSuccess: data => {
+    onSuccess: (data: PurgeResponse) => {
       toast.success(data.message || 'Stream purged successfully');
     },
     onError: (error: Error) => {
       toast.error(`Failed to purge stream: ${error.message}`);
     },
   });
+
+  const handleInputChange = (_e: ChangeEvent<HTMLInputElement>) => {
+    setStreamName('Changed');
+  };
 
   const handlePurge = () => {
     if (
@@ -143,7 +152,7 @@ const AdminPage = () => {
           <input
             type="text"
             value={streamName}
-            onChange={e => setStreamName(e.target.value)}
+            onChange={handleInputChange}
             style={{
               width: '100%',
               padding: '0.5rem',

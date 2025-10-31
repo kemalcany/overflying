@@ -30,16 +30,51 @@ const Header = styled.header`
   padding: 0 24px;
   background-color: #060605;
   height: 64px;
-  color: red;
+`;
+
+const ResiumButton = styled.button<{$isActive: boolean}>`
+  margin-left: auto;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${props => (props.$isActive ? '#2563eb' : 'white')};
+  background: ${props => (props.$isActive ? 'white' : 'transparent')};
+  border: ${props => (props.$isActive ? 'none' : '1px solid white')};
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${props =>
+      props.$isActive ? '#f3f4f6' : 'rgba(255, 255, 255, 0.1)'};
+  }
+`;
+
+const AnimatedPanel = styled.div<{$isOpen: boolean}>`
+  width: 100%;
+  background: #ef4444;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: ${props => (props.$isOpen ? '200px' : '0px')};
+  height: ${props => (props.$isOpen ? '40%' : '0')};
+  opacity: ${props => (props.$isOpen ? 1 : 0)};
+`;
+
+const ContentWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
 `;
 
 const SidebarTrigger = styled.button`
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
   color: white;
-  background: red;
+  background: transparent;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -47,10 +82,6 @@ const SidebarTrigger = styled.button`
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
-  }
-
-  @media (max-width: 768px) {
-    display: flex;
   }
 `;
 
@@ -79,11 +110,11 @@ const Content = styled.div`
   overflow: auto;
 `;
 
-const Overlay = styled.div<{isOpen: boolean}>`
+const Overlay = styled.div<{$isOpen: boolean}>`
   display: none;
 
   @media (max-width: 768px) {
-    display: ${props => (props.isOpen ? 'block' : 'none')};
+    display: ${props => (props.$isOpen ? 'block' : 'none')};
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -93,7 +124,8 @@ const Overlay = styled.div<{isOpen: boolean}>`
 
 export default function DashboardLayout({children}: {children: ReactNode}) {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Start open by default
+  const [isResiumEnabled, setIsResiumEnabled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -116,16 +148,27 @@ export default function DashboardLayout({children}: {children: ReactNode}) {
   return (
     <Container>
       <AppSidebar isOpen={isSidebarOpen} />
-      <Overlay isOpen={isSidebarOpen} onClick={() => setIsSidebarOpen(false)} />
+      <Overlay
+        $isOpen={isSidebarOpen}
+        onClick={() => setIsSidebarOpen(false)}
+      />
       <Main>
         <Header>
           <SidebarTrigger onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             <Menu size={20} />
           </SidebarTrigger>
           <Separator />
-          Hello
+          <ResiumButton
+            $isActive={isResiumEnabled}
+            onClick={() => setIsResiumEnabled(!isResiumEnabled)}
+          >
+            Resium
+          </ResiumButton>
         </Header>
-        <Content>{children}</Content>
+        <ContentWrapper>
+          <AnimatedPanel $isOpen={isResiumEnabled} />
+          <Content>{children}</Content>
+        </ContentWrapper>
       </Main>
     </Container>
   );

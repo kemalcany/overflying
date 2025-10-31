@@ -297,9 +297,7 @@ export default function JobsPage() {
   };
 
   const handleRowClick = (jobId: string) => {
-    // TODO: Implement job detail view (removed dynamic route for static export)
-    console.warn('Job clicked:', jobId);
-    // router.push(`/jobs/${jobId}`);
+    window.location.href = `/jobs/${jobId}`;
   };
 
   if (isLoading) {

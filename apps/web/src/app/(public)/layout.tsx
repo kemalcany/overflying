@@ -1,7 +1,8 @@
 'use client';
 
+import {keyframes} from '@emotion/react';
 import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
+import {type ReactNode} from 'react';
 
 const gradientAnimation = keyframes`
   0% {
@@ -47,11 +48,7 @@ const Content = styled.div`
   z-index: 10;
 `;
 
-export default function PublicLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function PublicLayout({children}: {children: ReactNode}) {
   return (
     <Container>
       <AnimatedBackground />

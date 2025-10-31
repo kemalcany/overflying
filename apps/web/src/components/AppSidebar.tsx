@@ -5,8 +5,9 @@ import {BarChart3, Package} from 'lucide-react';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 
-const SidebarContainer = styled.aside<{isOpen?: boolean}>`
+const SidebarContainer = styled.aside<{$isOpen?: boolean}>`
   width: 240px;
+  min-width: 240px;
   height: 100vh;
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
@@ -14,12 +15,13 @@ const SidebarContainer = styled.aside<{isOpen?: boolean}>`
   flex-direction: column;
   position: sticky;
   top: 0;
-  transition: transform 0.3s ease;
+  left: 0;
 
   @media (max-width: 768px) {
     position: fixed;
     z-index: 50;
-    transform: translateX(${props => (props.isOpen ? '0' : '-100%')});
+    transform: translateX(${props => (props.$isOpen ? '0' : '-100%')});
+    transition: transform 0.3s ease;
   }
 `;
 
@@ -183,7 +185,7 @@ export function AppSidebar({isOpen}: AppSidebarProps) {
   };
 
   return (
-    <SidebarContainer isOpen={isOpen}>
+    <SidebarContainer $isOpen={isOpen}>
       <SidebarHeader>
         <Logo>Planet</Logo>
       </SidebarHeader>

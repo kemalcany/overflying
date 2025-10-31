@@ -117,7 +117,6 @@ jobs:
       - name: Deploy to Firebase App Hosting (Staging)
         working-directory: apps/web
         run: |
-          ACCESS_TOKEN=$(gcloud auth print-access-token)
           firebase apphosting:rollouts:create staging-overflying \
             --project ${{ env.PROJECT_ID }} \
             --config apphosting.staging.yaml \
@@ -159,7 +158,6 @@ jobs:
       - name: Deploy to Firebase App Hosting (Production)
         working-directory: apps/web
         run: |
-          ACCESS_TOKEN=$(gcloud auth print-access-token)
           firebase apphosting:rollouts:create production-overflying \
             --project ${{ env.PROJECT_ID }} \
             --config apphosting.production.yaml \

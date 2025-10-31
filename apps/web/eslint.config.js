@@ -1,11 +1,13 @@
-import tseslint from '@typescript-eslint/eslint-plugin'
-import tsparser from '@typescript-eslint/parser'
-import planetConfig from 'eslint-config-planet/react.js'
+/* eslint-disable import/no-unresolved */
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import planetConfig from 'eslint-config-planet/react.js';
 
 export default [
   ...planetConfig,
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
+    // files: ['**/*.{ts,tsx,js,jsx}'], // In order to not link config.js files such as this one
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -60,4 +62,4 @@ export default [
       'no-console': ['error', {allow: ['warn', 'error']}],
     },
   },
-]
+];

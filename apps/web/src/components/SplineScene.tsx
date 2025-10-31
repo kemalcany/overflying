@@ -4,6 +4,7 @@ import {useEffect, useRef, useState} from 'react';
 declare global {
   interface Window {
     SplineApplication?: any;
+    splineScriptLoading?: Promise<void>;
   }
 }
 
@@ -18,37 +19,52 @@ export const SplineScene = ({scene}: {scene: string}) => {
 
     const loadSpline = async () => {
       try {
-        // Load script if not already loaded
-        if (!window.SplineApplication) {
-          await new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.textContent = `
-              import { Application } from 'https://unpkg.com/@splinetool/runtime@1.10.29/build/runtime.js';
-              window.SplineApplication = Application;
-            `;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
+        // Prevent double initialization early
+        if (splineRef.current) {
+          console.warn('Spline already initialized, skipping...');
+          return;
+        }
 
-          // Wait a bit for the module to be available
-          await new Promise(resolve => setTimeout(resolve, 100));
+        // Load script if not already loaded or loading
+        if (!window.SplineApplication) {
+          if (!window.splineScriptLoading) {
+            console.warn('Loading Spline script...');
+            window.splineScriptLoading = new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.type = 'module';
+              script.textContent = `
+                import { Application } from 'https://unpkg.com/@splinetool/runtime@1.10.91/build/runtime.js';
+                window.SplineApplication = Application;
+              `;
+              script.onload = () => setTimeout(resolve, 300);
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+
+          await window.splineScriptLoading;
         }
 
         if (!mounted || !canvasRef.current || !window.SplineApplication) {
           return;
         }
 
+        // Double check before initializing
+        if (splineRef.current) {
+          return;
+        }
+
         // Initialize Spline
+        console.warn('Initializing Spline application...');
         splineRef.current = new window.SplineApplication(canvasRef.current);
         await splineRef.current.load(scene);
 
         if (mounted) {
+          console.warn('Spline scene loaded successfully');
           setIsLoaded(true);
         }
       } catch (err) {
-        console.error('Spline error:', err);
+        console.error('Failed to load Spline:', err);
         if (mounted) {
           setError('Failed to load 3D scene');
         }
@@ -59,6 +75,9 @@ export const SplineScene = ({scene}: {scene: string}) => {
 
     return () => {
       mounted = false;
+      if (splineRef.current) {
+        splineRef.current = null;
+      }
     };
   }, [scene]);
 

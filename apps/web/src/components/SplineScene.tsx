@@ -4,9 +4,48 @@ import {useEffect, useRef, useState} from 'react';
 declare global {
   interface Window {
     SplineApplication?: any;
-    splineScriptLoading?: Promise<void>;
   }
 }
+
+// Load Spline script once globally
+const loadSplineScript = (() => {
+  let loadPromise: Promise<void> | null = null;
+
+  return () => {
+    if (window.SplineApplication) {
+      return Promise.resolve();
+    }
+
+    if (!loadPromise) {
+      // console.log('Loading Spline script globally');
+      loadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = `
+          import { Application } from 'https://unpkg.com/@splinetool/runtime@1.10.91/build/runtime.js';
+          window.SplineApplication = Application;
+          window.dispatchEvent(new Event('spline-loaded'));
+        `;
+
+        const onLoad = () => {
+          // console.log('Spline script loaded globally');
+          window.removeEventListener('spline-loaded', onLoad);
+          resolve();
+        };
+
+        window.addEventListener('spline-loaded', onLoad);
+        script.onerror = () => {
+          window.removeEventListener('spline-loaded', onLoad);
+          reject(new Error('Failed to load Spline script'));
+        };
+
+        document.head.appendChild(script);
+      });
+    }
+
+    return loadPromise;
+  };
+})();
 
 export const SplineScene = ({scene}: {scene: string}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,50 +56,30 @@ export const SplineScene = ({scene}: {scene: string}) => {
   useEffect(() => {
     let mounted = true;
 
-    const loadSpline = async () => {
+    const initializeSpline = async () => {
       try {
-        // Prevent double initialization early
+        // Load Spline script if not already loaded
+        await loadSplineScript();
+
+        if (!mounted || !canvasRef.current) {
+          return;
+        }
+
+        // Clean up previous instance if scene changes
         if (splineRef.current) {
-          console.warn('Spline already initialized, skipping...');
-          return;
+          splineRef.current.dispose?.();
+          splineRef.current = null;
         }
 
-        // Load script if not already loaded or loading
-        if (!window.SplineApplication) {
-          if (!window.splineScriptLoading) {
-            console.warn('Loading Spline script...');
-            window.splineScriptLoading = new Promise((resolve, reject) => {
-              const script = document.createElement('script');
-              script.type = 'module';
-              script.textContent = `
-                import { Application } from 'https://unpkg.com/@splinetool/runtime@1.10.91/build/runtime.js';
-                window.SplineApplication = Application;
-              `;
-              script.onload = () => setTimeout(resolve, 300);
-              script.onerror = reject;
-              document.head.appendChild(script);
-            });
-          }
+        // Initialize new Spline instance with the scene
+        // console.log(`Initializing Spline with scene: ${scene}`);
+        const app = new window.SplineApplication(canvasRef.current);
+        splineRef.current = app;
 
-          await window.splineScriptLoading;
-        }
-
-        if (!mounted || !canvasRef.current || !window.SplineApplication) {
-          return;
-        }
-
-        // Double check before initializing
-        if (splineRef.current) {
-          return;
-        }
-
-        // Initialize Spline
-        console.warn('Initializing Spline application...');
-        splineRef.current = new window.SplineApplication(canvasRef.current);
-        await splineRef.current.load(scene);
+        await app.load(scene);
 
         if (mounted) {
-          console.warn('Spline scene loaded successfully');
+          // console.log('Spline scene loaded successfully');
           setIsLoaded(true);
         }
       } catch (err) {
@@ -71,11 +90,12 @@ export const SplineScene = ({scene}: {scene: string}) => {
       }
     };
 
-    loadSpline();
+    initializeSpline();
 
     return () => {
       mounted = false;
       if (splineRef.current) {
+        splineRef.current.dispose?.();
         splineRef.current = null;
       }
     };

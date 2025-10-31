@@ -1,20 +1,8 @@
 'use client';
 
-import {keyframes} from '@emotion/react';
 import styled from '@emotion/styled';
 import {type ReactNode} from 'react';
-
-const gradientAnimation = keyframes`
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-`;
+import {SplineScene} from '@/components/SplineScene';
 
 const Container = styled.div`
   position: relative;
@@ -24,23 +12,17 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background-color: #000000;
 `;
 
-const AnimatedBackground = styled.div`
-  position: absolute;
-  inset: 0;
+const SplinePanel = styled.div`
+  position: relative;
+  min-height: 100vh;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    45deg,
-    #667eea 0%,
-    #764ba2 25%,
-    #f093fb 50%,
-    #4facfe 75%,
-    #667eea 100%
-  );
-  background-size: 400% 400%;
-  animation: ${gradientAnimation} 15s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 `;
 
 const Content = styled.div`
@@ -51,8 +33,10 @@ const Content = styled.div`
 export default function PublicLayout({children}: {children: ReactNode}) {
   return (
     <Container>
-      <AnimatedBackground />
-      <Content>{children}</Content>
+      <SplinePanel>
+        <Content>{children}</Content>
+        <SplineScene scene="https://prod.spline.design/Al3ikp4PcdkGJyIJ/scene.splinecode" />
+      </SplinePanel>
     </Container>
   );
 }

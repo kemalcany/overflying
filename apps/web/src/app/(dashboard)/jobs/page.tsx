@@ -342,7 +342,7 @@ export default function JobsPage() {
               </tr>
             </TableHead>
             <TableBody>
-              {jobs.map(job => (
+              {jobs?.map((job: Job) => (
                 <TableRow key={job.id} onClick={() => handleRowClick(job.id)}>
                   <TableCell className="muted">
                     {job.id.slice(0, 8)}...

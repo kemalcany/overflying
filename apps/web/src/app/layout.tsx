@@ -14,7 +14,8 @@ const RootLayout = ({children}: {children: ReactNode}) => (
       style={{
         margin: 0,
         fontFamily: 'system-ui, sans-serif',
-        background: '#000000',
+        // background: '#000000',
+        background: '#ffffff',
       }}
     >
       <EmotionCacheProvider>

@@ -1,7 +1,7 @@
 'use client';
+
 import styled from '@emotion/styled';
 import {useMutation} from '@tanstack/react-query';
-
 import {type ChangeEvent, useState} from 'react';
 import {toast} from 'sonner';
 
@@ -10,74 +10,116 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
 `;
 
 const Header = styled.div`
-  margin-bottom: 2rem;
+  margin-bottom: 32px;
 `;
 
 const Title = styled.h1`
-  color: #fff;
-  margin: 0 0 0.5rem 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
 `;
 
 const Subtitle = styled.p`
-  color: #999;
+  font-size: 14px;
+  color: #6b7280;
   margin: 0;
 `;
 
 const Section = styled.div`
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  padding: 24px;
+  margin-bottom: 16px;
 `;
 
 const SectionTitle = styled.h2`
-  color: #fff;
-  font-size: 1.25rem;
-  margin: 0 0 1rem 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
 `;
 
 const Warning = styled.div`
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 4px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  color: #856404;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: #92400e;
+  display: flex;
+  gap: 12px;
+  align-items: start;
+`;
+
+const WarningIcon = styled.span`
+  font-size: 20px;
+  line-height: 1;
+`;
+
+const WarningContent = styled.div`
+  flex: 1;
+
+  strong {
+    font-weight: 600;
+  }
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #111827;
+  font-size: 14px;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
 `;
 
 const DangerButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: #dc3545;
+  padding: 10px 20px;
+  background: #ef4444;
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 0.875rem;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: #c82333;
+    background: #dc2626;
   }
 
   &:disabled {
-    background: #6c757d;
+    background: #9ca3af;
     cursor: not-allowed;
-  }
-`;
-
-const BackLink = styled.a`
-  color: #2196f3;
-  text-decoration: none;
-  font-size: 0.875rem;
-
-  &:hover {
-    text-decoration: underline;
   }
 `;
 
@@ -85,7 +127,7 @@ interface PurgeResponse {
   message?: string;
 }
 
-const AdminPage = () => {
+export default function AdminPage() {
   const [streamName, setStreamName] = useState('JOBS');
 
   const purgeMutation = useMutation({
@@ -113,8 +155,8 @@ const AdminPage = () => {
     },
   });
 
-  const handleInputChange = (_e: ChangeEvent<HTMLInputElement>) => {
-    setStreamName('Changed');
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setStreamName(e.target.value);
   };
 
   const handlePurge = () => {
@@ -132,39 +174,29 @@ const AdminPage = () => {
       <Header>
         <Title>Admin Dashboard</Title>
         <Subtitle>Dangerous operations - use with caution</Subtitle>
-        <BackLink href="/">← Back to Dashboard</BackLink>
       </Header>
 
       <Section>
         <SectionTitle>NATS Stream Management</SectionTitle>
 
         <Warning>
-          ⚠️ <strong>Warning:</strong> Purging a stream will permanently delete
-          all messages. This action cannot be undone.
+          <WarningIcon>⚠️</WarningIcon>
+          <WarningContent>
+            <strong>Warning:</strong> Purging a stream will permanently delete
+            all messages. This action cannot be undone.
+          </WarningContent>
         </Warning>
 
-        <div style={{marginBottom: '1rem'}}>
-          <label
-            style={{color: '#fff', display: 'block', marginBottom: '0.5rem'}}
-          >
-            Stream Name:
-          </label>
-          <input
+        <FormGroup>
+          <Label htmlFor="streamName">Stream Name:</Label>
+          <Input
+            id="streamName"
             type="text"
             value={streamName}
             onChange={handleInputChange}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              background: '#000',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              color: '#fff',
-              fontSize: '0.875rem',
-            }}
             placeholder="JOBS"
           />
-        </div>
+        </FormGroup>
 
         <DangerButton
           onClick={handlePurge}
@@ -175,6 +207,4 @@ const AdminPage = () => {
       </Section>
     </Container>
   );
-};
-
-export default AdminPage;
+}

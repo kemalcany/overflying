@@ -73,5 +73,6 @@ logs/
 .DS_Store
 Thumbs.db
 
-
 .config
+
+_unused

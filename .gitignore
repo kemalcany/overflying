@@ -73,6 +73,10 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Me
+
 .config
 
 _unused
+
+external_figma

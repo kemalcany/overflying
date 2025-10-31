@@ -1,3 +1,7 @@
+
+# ToDo:
+# Try the new package manager 'uv' for python repos: https://emily.space/posts/251023-uv
+
 [tool.poetry]
 name = "overflying-worker"
 version = "0.1.0"

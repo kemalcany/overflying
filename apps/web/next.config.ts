@@ -1,10 +1,8 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  images: {
-    unoptimized: true, // Required for static export
-  },
+  // SSR mode enabled - removed output: 'export'
+  // images.unoptimized removed - Firebase App Hosting supports Next.js Image Optimization
   compiler: {
     emotion: true,
   },

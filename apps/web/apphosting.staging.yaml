@@ -1,0 +1,26 @@
+# Firebase App Hosting configuration for Staging
+# https://firebase.google.com/docs/app-hosting
+
+runConfig:
+  # Minimum 1 CPU and 1 GiB memory for Next.js SSR
+  cpu: 1
+  memoryMiB: 1024
+  # Maximum number of concurrent requests per instance
+  maxConcurrency: 100
+  # Minimum and maximum instances for auto-scaling
+  minInstances: 0
+  maxInstances: 4
+
+env:
+  - variable: NODE_ENV
+    value: production
+  # Add your staging-specific environment variables here
+  # - variable: NEXT_PUBLIC_API_URL
+  #   value: https://staging-api.example.com
+  # - variable: API_KEY
+  #   secret: staging-api-key
+
+# Build configuration
+build:
+  # Use npm since Bun is not officially supported by Firebase App Hosting yet
+  bundler: npm

@@ -1,0 +1,27 @@
+# Firebase App Hosting configuration for Production
+# https://firebase.google.com/docs/app-hosting
+
+runConfig:
+  # Production tier with more resources
+  cpu: 1
+  memoryMiB: 1024
+  # Maximum number of concurrent requests per instance
+  maxConcurrency: 100
+  # Minimum and maximum instances for auto-scaling
+  # Keep at least 1 instance warm in production to avoid cold starts
+  minInstances: 1
+  maxInstances: 10
+
+env:
+  - variable: NODE_ENV
+    value: production
+  # Add your production-specific environment variables here
+  # - variable: NEXT_PUBLIC_API_URL
+  #   value: https://api.example.com
+  # - variable: API_KEY
+  #   secret: production-api-key
+
+# Build configuration
+build:
+  # Use npm since Bun is not officially supported by Firebase App Hosting yet
+  bundler: npm

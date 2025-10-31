@@ -117,9 +117,11 @@ jobs:
       - name: Deploy to Firebase App Hosting (Staging)
         working-directory: apps/web
         run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
           firebase apphosting:rollouts:create staging-overflying \
             --project ${{ env.PROJECT_ID }} \
-            --config apphosting.staging.yaml
+            --config apphosting.staging.yaml \
+            --token "$ACCESS_TOKEN"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY_WEB }}
 

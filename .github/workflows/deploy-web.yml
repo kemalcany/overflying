@@ -130,7 +130,7 @@ jobs:
       - name: Staging Deployment Success
         run: |
           echo "========================================="
-          echo "   STAGING DEPLOYED TO APP HOSTING!"
+          echo "   STAGING DEPLOYED TO APP HOSTING! !!!"
           echo "========================================="
           echo "URL: https://staging.overfly.ing"
           echo "Backend: staging-overflying"

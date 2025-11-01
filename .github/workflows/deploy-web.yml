@@ -119,7 +119,7 @@ jobs:
           # Use Application Default Credentials from gcloud auth
           firebase apphosting:rollouts:create staging-overflying \
             --project ${{ env.PROJECT_ID }} \
-            --config apps/web/apphosting.staging.yaml \
+            --config apphosting.staging.yaml \
             --non-interactive
 
       - name: Staging Deployment Success
@@ -158,7 +158,7 @@ jobs:
           # Use Application Default Credentials from gcloud auth
           firebase apphosting:rollouts:create production-overflying \
             --project ${{ env.PROJECT_ID }} \
-            --config apps/web/apphosting.production.yaml \
+            --config apphosting.production.yaml \
             --non-interactive
 
       - name: Production Deployment Success

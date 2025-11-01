@@ -80,3 +80,6 @@ Thumbs.db
 _unused
 
 external_figma
+
+# Generated shared types (copied at build time)
+apps/web/src/generated/

@@ -115,17 +115,12 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase App Hosting (Staging)
-        working-directory: apps/web
         run: |
-          # Activate service account for Firebase CLI using the credentials file
-          gcloud auth activate-service-account --key-file="${GOOGLE_GHA_CREDS_PATH}"
-
+          # Use Application Default Credentials from gcloud auth
           firebase apphosting:rollouts:create staging-overflying \
             --project ${{ env.PROJECT_ID }} \
-            --config apphosting.staging.yaml \
+            --config apps/web/apphosting.staging.yaml \
             --non-interactive
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
 
       - name: Staging Deployment Success
         run: |
@@ -159,17 +154,12 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy to Firebase App Hosting (Production)
-        working-directory: apps/web
         run: |
-          # Activate service account for Firebase CLI using the credentials file
-          gcloud auth activate-service-account --key-file="${GOOGLE_GHA_CREDS_PATH}"
-
+          # Use Application Default Credentials from gcloud auth
           firebase apphosting:rollouts:create production-overflying \
             --project ${{ env.PROJECT_ID }} \
-            --config apphosting.production.yaml \
+            --config apps/web/apphosting.production.yaml \
             --non-interactive
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
 
       - name: Production Deployment Success
         run: |

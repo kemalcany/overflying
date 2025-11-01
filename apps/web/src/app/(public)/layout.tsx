@@ -37,7 +37,6 @@ export default function PublicLayout({children}: {children: ReactNode}) {
         <Content>{children}</Content>
         <SplineScene scene="https://prod.spline.design/Al3ikp4PcdkGJyIJ/scene.splinecode" />
       </SplinePanel>
-      <h1>overfly.ing</h1>
     </Container>
   );
 }

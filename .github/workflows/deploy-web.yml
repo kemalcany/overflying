@@ -120,7 +120,8 @@ jobs:
           firebase apphosting:rollouts:create staging-overflying \
             --project ${{ env.PROJECT_ID }} \
             --config apps/web/apphosting.staging.yaml \
-            --non-interactive
+            --git-branch main \
+            --force
 
       - name: Staging Deployment Success
         run: |
@@ -159,7 +160,8 @@ jobs:
           firebase apphosting:rollouts:create production-overflying \
             --project ${{ env.PROJECT_ID }} \
             --config apps/web/apphosting.production.yaml \
-            --non-interactive
+            --git-branch main \
+            --force
 
       - name: Production Deployment Success
         run: |

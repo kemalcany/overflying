@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development next dev",
-    "prebuild": "node scripts/copy-shared-types.js",
     "build": "NODE_ENV=production next build",
     "build:a": "NODE_ENV=production ANALYZE=true next build --webpack",
     "start": "next start",

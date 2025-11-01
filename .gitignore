@@ -81,5 +81,6 @@ _unused
 
 external_figma
 
-# Generated shared types (copied at build time)
-apps/web/src/generated/
+# Generated shared types - now committed to repo for Firebase App Hosting
+# (Firebase App Hosting can't access monorepo packages folder)
+# apps/web/src/generated/

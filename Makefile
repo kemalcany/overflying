@@ -1,5 +1,5 @@
 .PHONY: help up down logs clean api worker web venv
-.PHONY: db-migrate db-upgrade db-downgrade db-shell db-query db-init
+.PHONY: db-migrate db-upgrade db-downgrade db-stamp db-shell db-query db-init
 .PHONY: db-local-shell db-local-query
 .PHONY: db-staging-init db-staging-migrate db-staging-upgrade db-staging-proxy
 .PHONY: db-prod-init db-prod-migrate db-prod-upgrade db-prod-proxy
@@ -68,6 +68,7 @@ help:
 	@echo "  make db-migrate msg=\"...\" [ENV=...]  - Generate migration"
 	@echo "  make db-upgrade [ENV=...]    - Apply migrations"
 	@echo "  make db-downgrade [ENV=...]  - Revert migration"
+	@echo "  make db-stamp rev=\"...\" [ENV=...]   - Stamp database to specific revision"
 	@echo ""
 	@echo "Cloud SQL Proxy (Staging/Production):"
 	@echo "  make db-staging-proxy   - Start Cloud SQL proxy for staging (port 5433)"
@@ -171,7 +172,8 @@ db-migrate:
 	@test -n "$(msg)" || (echo "Usage: make db-migrate msg=\"your message\" [ENV=...]" && exit 1)
 	@echo "Generating Alembic revision for $(ENV): $(msg)"
 	@set -a; . $(ROOT_ENV); set +a; \
-	bash -lc 'source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) revision -m "$(msg)"'
+	REV_ID=$$(date +"%Y%m%d_%H%M%S"); \
+	bash -lc "source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) revision --rev-id \"$${REV_ID}_$(msg)\" -m \"$(msg)\""
 
 db-upgrade:
 	@echo "Applying DB migrations for $(ENV)..."
@@ -184,13 +186,20 @@ db-downgrade:
 	@set -a; . $(ROOT_ENV); set +a; \
 	bash -lc 'source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) downgrade -1'
 
+db-stamp:
+	@test -n "$(rev)" || (echo "Usage: make db-stamp rev=\"revision_id\" [ENV=...]" && exit 1)
+	@echo "Stamping database to revision $(rev) for $(ENV)..."
+	@set -a; . $(ROOT_ENV); set +a; \
+	bash -lc 'source $(VENV)/bin/activate; alembic -c $(ALEMBIC_CONFIG) stamp $(rev)'
+	@echo "✓ Database stamped to $(rev) for $(ENV)"
+
 db-staging-proxy:
 	@echo "Starting Cloud SQL Proxy for staging..."
-	@cloud-sql-proxy overflying-db:us-central1:planet-staging --port 5433
+	@cloud-sql-proxy overflying-db:europe-west1:overflying-db --port 5433
 
 db-prod-proxy:
 	@echo "Starting Cloud SQL Proxy for production..."
-	@cloud-sql-proxy overflying-db:us-central1:planet-production --port 5434
+	@cloud-sql-proxy overflying-db:europe-west1:overflying-db --port 5434
 
 # Not used currently
 db-local-shell:

@@ -1,4 +1,3 @@
-
 from alembic import op
 
 # revision identifiers, used by Alembic.

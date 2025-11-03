@@ -15,8 +15,6 @@ Before starting, ensure you have:
 ### GCP Projects
 - **overflying-db**: PostgreSQL databases
 - **overflying-cluster**: Central infrastructure hub (GKE cluster, Artifact Registry, Secret Manager, CI/CD service account)
-- **overflying-api**: (Optional) API-specific resources if needed
-- **overflying-workers**: (Optional) Worker-specific resources if needed
 
 ### Resources
 - **GKE Cluster**: `overflying-autopilot` in `europe-west1`

@@ -80,3 +80,8 @@ Thumbs.db
 _unused
 
 external_figma
+external_auth
+
+# Generated shared types - now committed to repo for Firebase App Hosting
+# (Firebase App Hosting can't access monorepo packages folder)
+# apps/web/src/generated/

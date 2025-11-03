@@ -1,4 +1,4 @@
-import type {components, paths} from '../../../../packages/shared-types/ts';
+import type {components, paths} from '@/generated/shared-types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 

@@ -2,20 +2,20 @@ name: Deploy Web
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'apps/web/**'
-      - '.github/workflows/deploy-web.yml'
+      - "apps/web/**"
+      - ".github/workflows/deploy-web.yml"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'apps/web/**'
-      - '.github/workflows/deploy-web.yml'
+      - "apps/web/**"
+      - ".github/workflows/deploy-web.yml"
   workflow_run:
     workflows: ["Deploy API"]
     types:
       - completed
-  workflow_dispatch:  # Add this to enable manual triggers
+  workflow_dispatch: # Add this to enable manual triggers
 
 env:
   PROJECT_ID: overflying-web
@@ -26,7 +26,7 @@ jobs:
     name: Test Web
     runs-on: ubuntu-latest
     if: |
-      github.event_name != 'workflow_run' || 
+      github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion == 'success'
 
     steps:
@@ -62,7 +62,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ steps.api-url.outputs.url }}
         run: |
           bun install --frozen-lockfile
-          npm install @rollup/rollup-linux-x64-gnu --no-save
+          npm install @rollup/rollup-linux-x64-gnu @esbuild/linux-x64 --no-save
           bun run test:coverage
 
       - name: List coverage files
@@ -106,50 +106,30 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY_WEB }}
+          credentials_json: ${{ secrets.GCP_SA_KEY_FBS }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get staging API URL from Secret Manager
-        id: secrets
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase App Hosting (Staging)
         run: |
-          API_URL=$(gcloud secrets versions access latest --secret="api-url-staging" --project=${{ env.PROJECT_ID }})
-          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        working-directory: apps/web
-        run: |
-          bun install --frozen-lockfile
-          npm install @rollup/rollup-linux-x64-gnu --no-save
-
-      - name: Build static export
-        working-directory: apps/web
-        env:
-          NEXT_PUBLIC_API_URL: ${{ steps.secrets.outputs.api_url }}
-        run: bun run build
-
-      - name: Deploy to Firebase Hosting (Staging)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.GCP_SA_KEY_WEB }}'
-          channelId: live
-          projectId: overflying-web
-          target: overflying-staging
-          entryPoint: apps/web
+          # Use Application Default Credentials from gcloud auth
+          firebase apphosting:rollouts:create staging-overflying \
+            --project ${{ env.PROJECT_ID }} \
+            --config apps/web/apphosting.staging.yaml \
+            --git-branch main \
+            --force
 
       - name: Staging Deployment Success
         run: |
           echo "========================================="
-          echo "   STAGING DEPLOYED!"
+          echo "   STAGING DEPLOYED TO APP HOSTING! !!!"
           echo "========================================="
           echo "URL: https://staging.overfly.ing"
+          echo "Backend: staging-overflying"
 
   deploy-production:
     name: Deploy to Production
@@ -166,45 +146,27 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY_WEB }}
+          credentials_json: ${{ secrets.GCP_SA_KEY_FBS }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get production API URL from Secret Manager
-        id: secrets
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase App Hosting (Production)
         run: |
-          API_URL=$(gcloud secrets versions access latest --secret="api-url-production" --project=${{ env.PROJECT_ID }})
-          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        working-directory: apps/web
-        run: bun install --frozen-lockfile
-
-      - name: Build static export
-        working-directory: apps/web
-        env:
-          NEXT_PUBLIC_API_URL: ${{ steps.secrets.outputs.api_url }}
-        run: bun run build
-
-      - name: Deploy to Firebase Hosting (Production)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.GCP_SA_KEY_WEB }}'
-          channelId: live
-          projectId: overflying-web
-          target: overflying-production
-          entryPoint: apps/web
+          # Use Application Default Credentials from gcloud auth
+          firebase apphosting:rollouts:create production-overflying \
+            --project ${{ env.PROJECT_ID }} \
+            --config apps/web/apphosting.production.yaml \
+            --git-branch main \
+            --force
 
       - name: Production Deployment Success
         run: |
           echo "========================================="
-          echo "   PRODUCTION DEPLOYED!"
+          echo "   PRODUCTION DEPLOYED TO APP HOSTING!"
           echo "========================================="
           echo "URL: https://overfly.ing"
+          echo "Backend: production-overflying"

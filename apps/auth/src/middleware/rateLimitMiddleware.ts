@@ -11,7 +11,7 @@ const rateLimitStore = new Map<string, RateLimitEntry>()
 // For production, consider using Redis or a distributed rate limiting solution
 export const rateLimitMiddleware = (
   maxRequests: number = 5,
-  windowMs: number = 60000 // 1 minute
+  windowMs: number = 60000, // 1 minute
 ): MiddlewareHandler => {
   return async (c: Context, next: () => Promise<void>) => {
     const ip = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown'
@@ -32,9 +32,9 @@ export const rateLimitMiddleware = (
       return c.json(
         {
           success: false,
-          message: 'Too many requests. Please try again later.'
+          message: 'Too many requests. Please try again later.',
         },
-        429
+        429,
       )
     }
   }

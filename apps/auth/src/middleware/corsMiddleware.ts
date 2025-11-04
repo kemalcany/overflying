@@ -13,12 +13,12 @@ export const corsMiddleware: MiddlewareHandler = async (c: Context, next: () => 
   ]
 
   const origin = c.req.header('Origin')
-  
+
   if (origin && allowedOrigins.includes(origin)) {
     c.res.headers.set('Access-Control-Allow-Origin', origin)
     c.res.headers.set('Access-Control-Allow-Credentials', 'true')
   }
-  
+
   c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept')
   c.res.headers.set('Access-Control-Expose-Headers', 'Content-Length')

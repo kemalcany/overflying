@@ -2,7 +2,13 @@ import { Hono } from 'hono'
 import type { Context } from 'hono'
 import { connectToPostgres, getUserByEmail, getUserById } from './helpers/dbHelpers.ts'
 import { comparePlainAndHash } from './helpers/bcryptHelpers.ts'
-import { verifyToken, generateAuthResponse, authReq, type AppVariables, type EnvVars } from './helpers/authHelpers.ts'
+import {
+  type AppVariables,
+  authReq,
+  type EnvVars,
+  generateAuthResponse,
+  verifyToken,
+} from './helpers/authHelpers.ts'
 import { corsMiddleware } from './middleware/corsMiddleware.ts'
 import { rateLimitMiddleware } from './middleware/rateLimitMiddleware.ts'
 
@@ -13,8 +19,8 @@ const loadEnvVars = (): EnvVars => {
   // Token expiration in seconds
   // Development: 10 minutes access, 7 days refresh
   // Production: 5 days access, 30 days refresh
-  const accessExpire = environment === 'production' ? 432000 : 600  // 5 days : 10 minutes
-  const refreshExpire = environment === 'production' ? 2592000 : 604800  // 30 days : 7 days
+  const accessExpire = environment === 'production' ? 432000 : 600 // 5 days : 10 minutes
+  const refreshExpire = environment === 'production' ? 2592000 : 604800 // 30 days : 7 days
 
   // Get DATABASE_URL and convert psycopg2 format to standard postgres format
   let databaseUrl = Deno.env.get('DATABASE_URL') || ''
@@ -24,11 +30,13 @@ const loadEnvVars = (): EnvVars => {
 
   return {
     DATABASE_URL: databaseUrl,
-    JWT_ACCESS_SECRET: Deno.env.get('JWT_ACCESS_SECRET') || 'dev-access-secret-change-in-production',
-    JWT_REFRESH_SECRET: Deno.env.get('JWT_REFRESH_SECRET') || 'dev-refresh-secret-change-in-production',
+    JWT_ACCESS_SECRET: Deno.env.get('JWT_ACCESS_SECRET') ||
+      'dev-access-secret-change-in-production',
+    JWT_REFRESH_SECRET: Deno.env.get('JWT_REFRESH_SECRET') ||
+      'dev-refresh-secret-change-in-production',
     JWT_ACCESS_EXPIRE: accessExpire,
     JWT_REFRESH_EXPIRE: refreshExpire,
-    ENVIRONMENT: environment
+    ENVIRONMENT: environment,
   }
 }
 
@@ -112,7 +120,10 @@ app.post('/refresh', async (c: Context<AppVariables>) => {
       return c.json({ success: false, message: 'No refresh token on record' }, 401)
     }
 
-    const isRefreshTokenValid = await comparePlainAndHash(refreshToken, user.current_hashed_refresh_token)
+    const isRefreshTokenValid = await comparePlainAndHash(
+      refreshToken,
+      user.current_hashed_refresh_token,
+    )
     if (!isRefreshTokenValid) {
       return c.json({ success: false, message: 'Invalid refresh token' }, 401)
     }
@@ -139,7 +150,7 @@ app.post('/logout', authReq(envVars), async (c: Context<AppVariables>) => {
     try {
       await connection.queryObject(
         'UPDATE users SET current_hashed_refresh_token = NULL, updated_at = now() WHERE id = $1',
-        [userId]
+        [userId],
       )
     } finally {
       connection.release()
@@ -174,7 +185,11 @@ app.get('/me', authReq(envVars), async (c: Context<AppVariables>) => {
       return c.json({ success: false, message: 'User not found' }, 404)
     }
 
-    const { password_hash, current_hashed_refresh_token, ...userResponse } = user
+    const {
+      password_hash: _password_hash,
+      current_hashed_refresh_token: _current_hashed_refresh_token,
+      ...userResponse
+    } = user
     return c.json({ success: true, data: { user: userResponse } })
   } catch (error) {
     console.error('Me endpoint error:', error)

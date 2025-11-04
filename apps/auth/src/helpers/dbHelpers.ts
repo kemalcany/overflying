@@ -11,7 +11,8 @@ export interface User {
   updated_at: Date
 }
 
-export interface UserResponse extends Omit<User, 'password_hash' | 'current_hashed_refresh_token'> {}
+export interface UserResponse
+  extends Omit<User, 'password_hash' | 'current_hashed_refresh_token'> {}
 
 export const connectToPostgres = (databaseUrl: string) => {
   const pool = new Pool(databaseUrl, 3, true)
@@ -23,7 +24,7 @@ export const getUserByEmail = async (pool: Pool, email: string): Promise<User | 
   try {
     const result = await connection.queryObject<User>(
       'SELECT * FROM users WHERE email = $1 LIMIT 1',
-      [email.trim().toLowerCase()]
+      [email.trim().toLowerCase()],
     )
     return result.rows[0] || null
   } finally {
@@ -36,7 +37,7 @@ export const getUserById = async (pool: Pool, id: string): Promise<User | null> 
   try {
     const result = await connection.queryObject<User>(
       'SELECT * FROM users WHERE id = $1 LIMIT 1',
-      [id]
+      [id],
     )
     return result.rows[0] || null
   } finally {
@@ -47,13 +48,13 @@ export const getUserById = async (pool: Pool, id: string): Promise<User | null> 
 export const updateUserRefreshToken = async (
   pool: Pool,
   userId: string,
-  hashedRefreshToken: string
+  hashedRefreshToken: string,
 ): Promise<void> => {
   const connection = await pool.connect()
   try {
     await connection.queryObject(
       'UPDATE users SET current_hashed_refresh_token = $1, updated_at = now() WHERE id = $2',
-      [hashedRefreshToken, userId]
+      [hashedRefreshToken, userId],
     )
   } finally {
     connection.release()
@@ -61,6 +62,10 @@ export const updateUserRefreshToken = async (
 }
 
 export const prepareUserResponse = (user: User): UserResponse => {
-  const { password_hash, current_hashed_refresh_token, ...userResponse } = user
+  const {
+    password_hash: _password_hash,
+    current_hashed_refresh_token: _current_hashed_refresh_token,
+    ...userResponse
+  } = user
   return userResponse
 }

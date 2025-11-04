@@ -1,6 +1,6 @@
-import { create, verify, getNumericDate, Payload } from 'djwt'
+import { create, getNumericDate, Payload, verify } from 'djwt'
 import { Context, MiddlewareHandler } from 'hono'
-import { User, UserResponse, prepareUserResponse, updateUserRefreshToken } from './dbHelpers.ts'
+import { prepareUserResponse, updateUserRefreshToken, User, UserResponse } from './dbHelpers.ts'
 import { hashRefreshToken } from './bcryptHelpers.ts'
 import { Pool } from 'postgres'
 
@@ -19,26 +19,26 @@ const getKey = async (secretKey: string): Promise<CryptoKey> =>
     new TextEncoder().encode(secretKey),
     { name: 'HMAC', hash: 'SHA-256' },
     true,
-    ['sign', 'verify']
+    ['sign', 'verify'],
   )
 
 const getPayload = (user: User, expDuration: number) => ({
   email: user.email,
   sub: user.id,
   role: user.role,
-  exp: getNumericDate(expDuration)
+  exp: getNumericDate(expDuration),
 })
 
 export const generateTokens = async (user: User, envVars: EnvVars) => {
   const accessToken = await create(
     { alg: 'HS256', typ: 'JWT' },
     getPayload(user, envVars.JWT_ACCESS_EXPIRE),
-    await getKey(envVars.JWT_ACCESS_SECRET)
+    await getKey(envVars.JWT_ACCESS_SECRET),
   )
   const refreshToken = await create(
     { alg: 'HS256', typ: 'JWT' },
     getPayload(user, envVars.JWT_REFRESH_EXPIRE),
-    await getKey(envVars.JWT_REFRESH_SECRET)
+    await getKey(envVars.JWT_REFRESH_SECRET),
   )
   return { accessToken, refreshToken }
 }
@@ -46,7 +46,7 @@ export const generateTokens = async (user: User, envVars: EnvVars) => {
 export const generateAuthResponse = async (
   user: User,
   envVars: EnvVars,
-  pool: Pool
+  pool: Pool,
 ): Promise<{
   success: boolean
   data: {

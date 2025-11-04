@@ -3,6 +3,9 @@
 import styled from '@emotion/styled';
 import {useRouter} from 'next/navigation';
 import {type FormEvent, useState} from 'react';
+import {toast} from 'sonner';
+import {useAuthStore} from '@/store/authStore';
+import {authApi} from '@/lib/authApi';
 
 const Card = styled.div`
   width: 400px;
@@ -83,6 +86,11 @@ const Input = styled.input`
   &::placeholder {
     color: #9ca3af;
   }
+
+  &:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
 `;
 
 const Button = styled.button`
@@ -97,30 +105,73 @@ const Button = styled.button`
   cursor: pointer;
   transition: background 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #1d4ed8;
   }
 
-  &:active {
+  &:active:not(:disabled) {
     background: #1e40af;
+  }
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
   }
 `;
 
-export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const router = useRouter();
+const ErrorMessage = styled.p`
+  color: #dc2626;
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+`;
 
-  const handleSubmit = (e: FormEvent) => {
+const HelpText = styled.p`
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 16px;
+`;
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const setAuth = useAuthStore(state => state.setAuth);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // Simple validation - in a real app, you'd verify credentials
-    if (username && password) {
-      // TODO: Implement proper authentication
-      console.warn('Login attempt:', {username});
-      console.warn(
-        'TODO: Set auth state - localStorage.setItem(isAuthenticated, true)',
-      );
-      router.push('/jobs');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await authApi.login({email, password});
+
+      if (response.success && response.data) {
+        // Store auth state
+        setAuth(
+          response.data.user,
+          response.data.accessToken,
+          response.data.refreshToken,
+        );
+
+        // Show success message
+        toast.success(`Welcome back, ${response.data.user.name || response.data.user.email}!`);
+
+        // Redirect to dashboard
+        router.push('/jobs');
+      } else {
+        setError(response.message || 'Login failed');
+        toast.error(response.message || 'Login failed');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -135,13 +186,14 @@ export default function LoginPage() {
       <CardContent>
         <Form onSubmit={handleSubmit}>
           <FormField>
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              disabled={isLoading}
               required
             />
           </FormField>
@@ -153,11 +205,18 @@ export default function LoginPage() {
               placeholder="Enter your password"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              disabled={isLoading}
               required
             />
           </FormField>
-          <Button type="submit">Sign In</Button>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Signing In...' : 'Sign In'}
+          </Button>
         </Form>
+        <HelpText>
+          Demo: user@planet.com / 123 or hello@kemalyalcinkaya.co.uk / 123
+        </HelpText>
       </CardContent>
     </Card>
   );

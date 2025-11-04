@@ -1,10 +1,13 @@
 'use client';
 
 import styled from '@emotion/styled';
-import {Menu} from 'lucide-react';
+import {LogOut, Menu} from 'lucide-react';
 import {useRouter} from 'next/navigation';
-import {type ReactNode, useEffect, useState} from 'react';
+import {type ReactNode, useState} from 'react';
+import {toast} from 'sonner';
 import {AppSidebar} from '@/components/AppSidebar';
+import {authApi} from '@/lib/authApi';
+import {useAuthStore} from '@/store/authStore';
 
 const Container = styled.div`
   display: flex;
@@ -95,6 +98,57 @@ const Separator = styled.div`
   }
 `;
 
+const UserSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 14px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const UserAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 500;
+`;
+
+const LogoutButton = styled.button`
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+  }
+`;
+
 /*
 const PageTitle = styled.h1`
   font-size: 16px;
@@ -124,26 +178,42 @@ const Overlay = styled.div<{$isOpen: boolean}>`
 
 export default function DashboardLayout({children}: {children: ReactNode}) {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Start open by default
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isResiumEnabled, setIsResiumEnabled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const {user, isAuthenticated, accessToken, clearAuth} = useAuthStore();
 
-  useEffect(() => {
-    // TODO: Check authentication status from proper auth provider
-    // console.log('TODO: Check auth - localStorage.getItem(isAuthenticated)');
-    // For now, assume authenticated for static export
-    setIsAuthenticated(true);
-    setIsLoading(false);
-  }, [router]);
+  const handleLogout = async () => {
+    try {
+      if (accessToken) {
+        await authApi.logout(accessToken);
+      }
+      clearAuth();
+      toast.success('Logged out successfully');
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear auth anyway
+      clearAuth();
+      router.push('/login');
+    }
+  };
 
-  if (isLoading) {
-    return null; // or a loading spinner
-  }
-
+  // Auth check is handled by AuthProvider in root layout
   if (!isAuthenticated) {
     return null;
   }
+
+  const getUserInitials = () => {
+    if (user?.name) {
+      return user.name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return user?.email?.[0]?.toUpperCase() || 'U';
+  };
 
   return (
     <Container>
@@ -164,6 +234,16 @@ export default function DashboardLayout({children}: {children: ReactNode}) {
           >
             Resium
           </ResiumButton>
+          <UserSection>
+            <UserInfo>
+              <UserAvatar>{getUserInitials()}</UserAvatar>
+              <span>{user?.name || user?.email}</span>
+            </UserInfo>
+            <LogoutButton onClick={handleLogout}>
+              <LogOut size={16} />
+              <span>Logout</span>
+            </LogoutButton>
+          </UserSection>
         </Header>
         <ContentWrapper>
           <AnimatedPanel $isOpen={isResiumEnabled} />

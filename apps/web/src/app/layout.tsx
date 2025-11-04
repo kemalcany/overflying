@@ -1,5 +1,6 @@
 import type {ReactNode} from 'react';
 import {Toaster} from 'sonner';
+import {AuthProvider} from '@/providers/auth';
 import {EmotionCacheProvider} from '@/providers/emotion';
 import {QueryProvider} from '@/providers/query';
 
@@ -19,8 +20,10 @@ const RootLayout = ({children}: {children: ReactNode}) => (
       }}
     >
       <EmotionCacheProvider>
-        <QueryProvider>{children}</QueryProvider>
-        <Toaster position="top-right" richColors />
+        <QueryProvider>
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster position="top-right" richColors />
+        </QueryProvider>
       </EmotionCacheProvider>
     </body>
   </html>

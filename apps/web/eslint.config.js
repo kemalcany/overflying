@@ -52,6 +52,7 @@ export default [
         'error',
         'always',
         {
+          ignorePackages: true,
           ts: 'never',
           tsx: 'never',
           js: 'never',

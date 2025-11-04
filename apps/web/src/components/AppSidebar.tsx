@@ -4,6 +4,7 @@ import styled from '@emotion/styled';
 import {BarChart3, Package} from 'lucide-react';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
+import {useAuthStore} from '@/store/authStore.ts';
 
 const SidebarContainer = styled.aside<{$isOpen?: boolean}>`
   width: 240px;
@@ -177,10 +178,10 @@ interface AppSidebarProps {
 export function AppSidebar({isOpen}: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const {user, clearAuth, getUserInitials} = useAuthStore();
 
   const handleSignOut = () => {
-    // TODO: Implement proper sign out
-    console.warn('TODO: Sign out - localStorage.removeItem(isAuthenticated)');
+    clearAuth();
     router.push('/login');
   };
 
@@ -210,10 +211,10 @@ export function AppSidebar({isOpen}: AppSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <UserButton>
-          <Avatar>JD</Avatar>
+          <Avatar>{getUserInitials()}</Avatar>
           <UserInfo>
-            <UserName>John Doe</UserName>
-            <UserRole>Admin</UserRole>
+            <UserName>{user?.name || user?.email}</UserName>
+            <UserRole>{user?.role || 'User'}</UserRole>
           </UserInfo>
         </UserButton>
         <SignOutButton onClick={handleSignOut}>Sign Out</SignOutButton>

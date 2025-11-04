@@ -5,9 +5,9 @@ import {LogOut, Menu} from 'lucide-react';
 import {useRouter} from 'next/navigation';
 import {type ReactNode, useState} from 'react';
 import {toast} from 'sonner';
-import {AppSidebar} from '@/components/AppSidebar';
-import {authApi} from '@/lib/authApi';
-import {useAuthStore} from '@/store/authStore';
+import {AppSidebar} from '@/components/AppSidebar.tsx';
+import {authApi} from '@/lib/authApi.ts';
+import {useAuthStore} from '@/store/authStore.ts';
 
 const Container = styled.div`
   display: flex;
@@ -180,7 +180,8 @@ export default function DashboardLayout({children}: {children: ReactNode}) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isResiumEnabled, setIsResiumEnabled] = useState(false);
-  const {user, isAuthenticated, accessToken, clearAuth} = useAuthStore();
+  const {user, isAuthenticated, accessToken, clearAuth, getUserInitials} =
+    useAuthStore();
 
   const handleLogout = async () => {
     try {
@@ -202,18 +203,6 @@ export default function DashboardLayout({children}: {children: ReactNode}) {
   if (!isAuthenticated) {
     return null;
   }
-
-  const getUserInitials = () => {
-    if (user?.name) {
-      return user.name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    return user?.email?.[0]?.toUpperCase() || 'U';
-  };
 
   return (
     <Container>

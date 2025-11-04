@@ -1,5 +1,5 @@
 import {create} from 'zustand';
-import {persist, createJSONStorage} from 'zustand/middleware';
+import {createJSONStorage, persist} from 'zustand/middleware';
 
 export interface User {
   id: string;
@@ -20,11 +20,12 @@ interface AuthState {
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
   updateUser: (user: User) => void;
+  getUserInitials: () => string;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    set => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -50,6 +51,19 @@ export const useAuthStore = create<AuthState>()(
       setLoading: loading => set({isLoading: loading}),
 
       updateUser: user => set({user}),
+
+      getUserInitials: () => {
+        const {user} = get();
+        if (user?.name) {
+          return user.name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+        }
+        return user?.email?.[0]?.toUpperCase() || 'U';
+      },
     }),
     {
       name: 'auth-storage',

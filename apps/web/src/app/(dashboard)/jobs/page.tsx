@@ -5,10 +5,10 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useEffect, useState} from 'react';
 import {toast} from 'sonner';
 // import {useRouter} from 'next/navigation'; // Removed for static export
-import {DeleteConfirmDialog} from '@/components/DeleteConfirmDialog';
-import {JobDialog} from '@/components/JobDialog';
-import type {JobFormData} from '@/components/JobForm';
-import {api, connectJobEvents} from '@/lib/api';
+import {DeleteConfirmDialog} from '@/components/DeleteConfirmDialog.tsx';
+import {JobDialog} from '@/components/JobDialog.tsx';
+import type {JobFormData} from '@/components/JobForm.tsx';
+import {api, connectJobEvents} from '@/lib/api.ts';
 
 const Container = styled.div`
   display: flex;

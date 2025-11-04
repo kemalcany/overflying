@@ -1,8 +1,7 @@
 'use client';
 import styled from '@emotion/styled';
 import * as Dialog from '@radix-ui/react-dialog';
-import {JobForm} from './JobForm';
-import type {JobFormData} from './JobForm';
+import {JobForm, type JobFormData} from './JobForm.tsx';
 
 interface JobDialogProps {
   open: boolean;

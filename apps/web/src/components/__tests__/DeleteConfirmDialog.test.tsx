@@ -1,7 +1,7 @@
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {DeleteConfirmDialog} from '../DeleteConfirmDialog';
+import {DeleteConfirmDialog} from '../DeleteConfirmDialog.tsx';
 
 describe('DeleteConfirmDialog', () => {
   const mockOnOpenChange = vi.fn();

@@ -1,3 +1,9 @@
+import {
+  authenticatedDelete,
+  authenticatedGet,
+  authenticatedPost,
+  authenticatedPut,
+} from './authenticatedFetch.ts';
 import type {components, paths} from '@/generated/shared-types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
@@ -10,39 +16,19 @@ type JobsResponse =
 
 export const api = {
   getJobs: async (): Promise<JobsResponse> =>
-    fetch(`${API_URL}/jobs`).then(r => r.json() as Promise<JobsResponse>),
+    authenticatedGet<JobsResponse>(`${API_URL}/jobs`),
 
   getJob: async (id: string): Promise<JobResponse> =>
-    fetch(`${API_URL}/jobs/${id}`).then(r => r.json() as Promise<JobResponse>),
+    authenticatedGet<JobResponse>(`${API_URL}/jobs/${id}`),
 
   createJob: async (data: JobCreate): Promise<JobResponse> =>
-    fetch(`${API_URL}/jobs`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data),
-    }).then(r => r.json() as Promise<JobResponse>),
+    authenticatedPost<JobResponse>(`${API_URL}/jobs`, data),
 
   updateJob: async (id: string, data: JobUpdate): Promise<JobResponse> =>
-    fetch(`${API_URL}/jobs/${id}`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data),
-    }).then(r => {
-      if (!r.ok) {
-        throw new Error(`Failed to update job: ${r.statusText}`);
-      }
-      return r.json() as Promise<JobResponse>;
-    }),
+    authenticatedPut<JobResponse>(`${API_URL}/jobs/${id}`, data),
 
   deleteJob: async (id: string): Promise<void> =>
-    fetch(`${API_URL}/jobs/${id}`, {
-      method: 'DELETE',
-    }).then(r => {
-      if (!r.ok) {
-        throw new Error(`Failed to delete job: ${r.statusText}`);
-      }
-      return undefined;
-    }),
+    authenticatedDelete(`${API_URL}/jobs/${id}`),
 };
 
 /**

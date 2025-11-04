@@ -4,8 +4,8 @@ import styled from '@emotion/styled';
 import {useRouter} from 'next/navigation';
 import {type FormEvent, useState} from 'react';
 import {toast} from 'sonner';
-import {useAuthStore} from '@/store/authStore';
-import {authApi} from '@/lib/authApi';
+import {authApi} from '@/lib/authApi.ts';
+import {useAuthStore} from '@/store/authStore.ts';
 
 const Card = styled.div`
   width: 400px;
@@ -158,7 +158,9 @@ export default function LoginPage() {
         );
 
         // Show success message
-        toast.success(`Welcome back, ${response.data.user.name || response.data.user.email}!`);
+        toast.success(
+          `Welcome back, ${response.data.user.name || response.data.user.email}!`,
+        );
 
         // Redirect to dashboard
         router.push('/jobs');
@@ -167,7 +169,8 @@ export default function LoginPage() {
         toast.error(response.message || 'Login failed');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

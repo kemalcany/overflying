@@ -1,6 +1,7 @@
 import type {User} from '@/store/authStore';
 
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:9100';
+const AUTH_API_URL =
+  process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:9100';
 
 export interface LoginCredentials {
   email: string;
@@ -60,7 +61,9 @@ export const authApi = {
     return response.json();
   },
 
-  async logout(accessToken: string): Promise<{success: boolean; message: string}> {
+  async logout(
+    accessToken: string,
+  ): Promise<{success: boolean; message: string}> {
     const response = await fetch(`${AUTH_API_URL}/logout`, {
       method: 'POST',
       headers: {

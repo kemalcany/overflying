@@ -2,8 +2,8 @@
 
 import {usePathname, useRouter} from 'next/navigation';
 import {type ReactNode, useEffect} from 'react';
-import {authApi} from '@/lib/authApi';
-import {useAuthStore} from '@/store/authStore';
+import {authApi} from '@/lib/authApi.ts';
+import {useAuthStore} from '@/store/authStore.ts';
 
 interface AuthProviderProps {
   children: ReactNode;

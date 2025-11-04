@@ -2,7 +2,7 @@
 
 import styled from '@emotion/styled';
 import {type ReactNode} from 'react';
-import {SplineScene} from '@/components/SplineScene';
+import {SplineScene} from '@/components/SplineScene.tsx';
 
 const Container = styled.div`
   position: relative;

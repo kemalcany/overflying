@@ -1,8 +1,8 @@
 import type {ReactNode} from 'react';
 import {Toaster} from 'sonner';
-import {AuthProvider} from '@/providers/auth';
-import {EmotionCacheProvider} from '@/providers/emotion';
-import {QueryProvider} from '@/providers/query';
+import {AuthProvider} from '@/providers/auth.tsx';
+import {EmotionCacheProvider} from '@/providers/emotion.tsx';
+import {QueryProvider} from '@/providers/query.tsx';
 
 export const metadata = {
   title: 'Overfly.ing',

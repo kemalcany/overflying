@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import {useQuery} from '@tanstack/react-query';
 import {ArrowLeft} from 'lucide-react';
 import {useParams, useRouter} from 'next/navigation';
-import {api} from '@/lib/api';
+import {api} from '@/lib/api.ts';
 
 const Container = styled.div`
   display: flex;

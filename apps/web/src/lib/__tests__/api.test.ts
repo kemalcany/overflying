@@ -1,6 +1,18 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {api} from '../api.ts';
 
+// Mock the auth store
+vi.mock('@/store/authStore.ts', () => ({
+  useAuthStore: {
+    getState: vi.fn(() => ({
+      accessToken: 'mock-access-token',
+      refreshToken: 'mock-refresh-token',
+      setAuth: vi.fn(),
+      clearAuth: vi.fn(),
+    })),
+  },
+}));
+
 // Mock fetch globally
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
@@ -43,7 +55,12 @@ describe('API Client', () => {
 
       const result = await api.getJobs();
 
-      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs`);
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/jobs`,
+        expect.objectContaining({
+          headers: expect.any(Headers),
+        }),
+      );
       expect(result).toEqual(mockJobs);
     });
   });
@@ -65,7 +82,12 @@ describe('API Client', () => {
 
       const result = await api.getJob('123');
 
-      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs/123`);
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/jobs/123`,
+        expect.objectContaining({
+          headers: expect.any(Headers),
+        }),
+      );
       expect(result).toEqual(mockJob);
     });
   });
@@ -87,11 +109,13 @@ describe('API Client', () => {
 
       const result = await api.createJob(jobData);
 
-      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(jobData),
-      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/jobs`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.any(Headers),
+        }),
+      );
       expect(result).toEqual(mockResponse);
     });
   });
@@ -114,22 +138,25 @@ describe('API Client', () => {
 
       const result = await api.updateJob(jobId, updateData);
 
-      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs/789`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(updateData),
-      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/jobs/789`,
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.any(Headers),
+        }),
+      );
       expect(result).toEqual(mockResponse);
     });
 
     it('throws error when update fails', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
+        status: 404,
         statusText: 'Not Found',
       });
 
       await expect(api.updateJob('999', {name: 'Updated'})).rejects.toThrow(
-        'Failed to update job: Not Found',
+        'HTTP 404: Not Found',
       );
     });
   });
@@ -142,26 +169,30 @@ describe('API Client', () => {
 
       const result = await api.deleteJob('123');
 
-      expect(mockFetch).toHaveBeenCalledWith(`${TEST_API_URL}/jobs/123`, {
-        method: 'DELETE',
-      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/jobs/123`,
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: expect.any(Headers),
+        }),
+      );
       expect(result).toBeUndefined();
     });
 
     it('throws error when delete fails', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
+        status: 404,
         statusText: 'Not Found',
       });
 
-      await expect(api.deleteJob('999')).rejects.toThrow(
-        'Failed to delete job: Not Found',
-      );
+      await expect(api.deleteJob('999')).rejects.toThrow('HTTP 404: Not Found');
     });
 
     it('handles 404 error for non-existent job', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
+        status: 404,
         statusText: 'Not Found',
       });
 

@@ -2,7 +2,7 @@
 git branch backup-before-cleanup
 
 # 2. Soft reset to the commit before deployment experiments
-git reset --soft adcee98
+git reset --soft 553f6a9
 
 # 3. Create a single clean commit with all your changes
 git commit -m "feat: migrate web app to Firebase App Hosting with SSR support

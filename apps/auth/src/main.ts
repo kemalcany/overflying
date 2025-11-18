@@ -10,11 +10,36 @@ import {
   verifyToken,
 } from './helpers/authHelpers.ts'
 import { corsMiddleware } from './middleware/corsMiddleware.ts'
+import { config } from 'dotenv'
 import { rateLimitMiddleware } from './middleware/rateLimitMiddleware.ts'
+
+// Load environment variables from .env.development in development mode
+const loadDotEnv = (): Record<string, string> => {
+  const environment = Deno.env.get('ENVIRONMENT') || 'development'
+  
+  if (environment === 'development') {
+    try {
+      const envData = config({ path: "./.env.development" })
+      console.log('Loaded .env.development successfully')
+      return envData as Record<string, string>
+    } catch (error) {
+      console.warn('Failed to load .env.development:', error)
+      return {}
+    }
+  }
+  return {}
+}
+
+const dotEnvData = loadDotEnv()
+
+// Helper function to get env variable with fallback to dotenv data
+const getEnvVar = (key: string): string | undefined => {
+  return Deno.env.get(key) || dotEnvData[key]
+}
 
 // Load environment variables
 const loadEnvVars = (): EnvVars => {
-  const environment = Deno.env.get('ENVIRONMENT') || 'development'
+  const environment = getEnvVar('ENVIRONMENT') || 'development'
 
   // Token expiration in seconds
   // Development: 10 minutes access, 7 days refresh
@@ -23,17 +48,18 @@ const loadEnvVars = (): EnvVars => {
   const refreshExpire = environment === 'production' ? 2592000 : 604800 // 30 days : 7 days
 
   // Get DATABASE_URL and convert psycopg2 format to standard postgres format
-  let databaseUrl = Deno.env.get('DATABASE_URL') || ''
+  let databaseUrl = getEnvVar('DATABASE_URL') || ''
   if (databaseUrl.startsWith('postgresql+psycopg2://')) {
     databaseUrl = databaseUrl.replace('postgresql+psycopg2://', 'postgresql://')
   }
 
+  const jwtAccessSecret = getEnvVar('JWT_ACCESS_SECRET') || 'dev-access-secret-change-in-production'
+  const jwtRefreshSecret = getEnvVar('JWT_REFRESH_SECRET') || 'dev-refresh-secret-change-in-production'
+
   return {
     DATABASE_URL: databaseUrl,
-    JWT_ACCESS_SECRET: Deno.env.get('JWT_ACCESS_SECRET') ||
-      'dev-access-secret-change-in-production',
-    JWT_REFRESH_SECRET: Deno.env.get('JWT_REFRESH_SECRET') ||
-      'dev-refresh-secret-change-in-production',
+    JWT_ACCESS_SECRET: jwtAccessSecret,
+    JWT_REFRESH_SECRET: jwtRefreshSecret,
     JWT_ACCESS_EXPIRE: accessExpire,
     JWT_REFRESH_EXPIRE: refreshExpire,
     ENVIRONMENT: environment,
@@ -42,6 +68,7 @@ const loadEnvVars = (): EnvVars => {
 
 const envVars = loadEnvVars()
 console.log(`Starting auth service in ${envVars.ENVIRONMENT} mode`)
+console.log(`Using DATABASE_URL: ${envVars.DATABASE_URL}`);
 console.log(`Access token expiration: ${envVars.JWT_ACCESS_EXPIRE}s`)
 console.log(`Refresh token expiration: ${envVars.JWT_REFRESH_EXPIRE}s`)
 

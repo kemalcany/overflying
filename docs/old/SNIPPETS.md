@@ -33,3 +33,17 @@ gcloud container clusters resize overfly-api \
 gcloud sql instances patch overflying-db \
   --authorized-networks=109.41.115.135 (curl ifconfig.me -4)
 ```
+
+## Killing local Postgres services that are stuck and preventing 'make up' container start
+
+```
+ps aux | grep postgres
+
+PostgreSQL 18 has PID 765
+PostgreSQL 17 has PID 764
+
+Kill the Processes
+Use the kill command to stop these processes:
+
+sudo kill -9 765 764
+```

@@ -133,6 +133,8 @@
     "https://deno.land/x/djwt@v3.0.2/mod.ts": "962d8f2c4d6a4db111f45d777b152356aec31ba7db0ca664601175a422629857",
     "https://deno.land/x/djwt@v3.0.2/signature.ts": "16238fbf558267c85dd6c0178045f006c8b914a7301db87149f3318326569272",
     "https://deno.land/x/djwt@v3.0.2/util.ts": "5cb264d2125c553678e11446bcfa0494025d120e3f59d0a3ab38f6800def697d",
+    "https://deno.land/x/dotenv@v3.2.0/mod.ts": "077b48773de9205266a0b44c3c3a3c3083449ed64bb0b6cc461b95720678d38e",
+    "https://deno.land/x/dotenv@v3.2.0/util.ts": "693730877b13f8ead2b79b2aa31e2a0652862f7dc0c5f6d2f313f4d39c7b7670",
     "https://deno.land/x/postgres@v0.19.3/client.ts": "d141c65c20484c545a1119c9af7a52dcc24f75c1a5633de2b9617b0f4b2ed5c1",
     "https://deno.land/x/postgres@v0.19.3/client/error.ts": "05b0e35d65caf0ba21f7f6fab28c0811da83cd8b4897995a2f411c2c83391036",
     "https://deno.land/x/postgres@v0.19.3/connection/auth.ts": "db15c1659742ef4d2791b32834950278dc7a40cb931f8e434e6569298e58df51",

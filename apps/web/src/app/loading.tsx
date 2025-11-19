@@ -37,7 +37,7 @@ export default function Loading() {
   return (
     <LoadingContainer>
       <Spinner />
-      <LoadingText>CUSTOM Loading...</LoadingText>
+      <LoadingText>CUSTOM Yow Loading...</LoadingText>
     </LoadingContainer>
   );
 }

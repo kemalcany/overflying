@@ -54,14 +54,13 @@ jobs:
 
       - name: Install dependencies
         working-directory: apps/web
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Run unit tests
         working-directory: apps/web
         env:
           NEXT_PUBLIC_API_URL: ${{ steps.api-url.outputs.url }}
         run: |
-          bun install --frozen-lockfile
           npm install @rollup/rollup-linux-x64-gnu @esbuild/linux-x64 --no-save
           bun run test:coverage
 
